@@ -1,11 +1,17 @@
 from typing import Any, Optional
 
-import pydantic
-
 
 class BaseParam:
+    """
+    Base class for declarative HTTP client parameters.
+
+    Parameters:
+        default (Any): Default value for the parameter.
+        field_name (str | None):
+            Name of the field to replace the keyword argument.
+    """
     def __init__(
-        self, default: Optional[Any] = None, field_name: Optional[str] = None
+        self, default: Any = None, field_name: Optional[str] = None
     ) -> None:
         if default is Ellipsis:
             default = None
@@ -13,11 +19,20 @@ class BaseParam:
         self.field_name = field_name
 
 
-Path = type("Path", (BaseParam,), {})
-Query = type("Query", (BaseParam,), {})
-BodyField = type("BodyField", (BaseParam,), {})
-Json = type("Json", (BaseParam,), {})
-Timeout = pydantic.create_model("Timeout", seconds=(int, ...))
+class Path(BaseParam):
+    ...
 
 
-__all__ = ["BaseParam", "Path", "Query", "BodyField", "Json", "Timeout"]
+class Query(BaseParam):
+    ...
+
+
+class BodyField(BaseParam):
+    ...
+
+
+class Json(BaseParam):
+    ...
+
+
+__all__ = ["BaseParam", "Path", "Query", "BodyField", "Json"]

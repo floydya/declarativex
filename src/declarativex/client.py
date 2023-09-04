@@ -21,11 +21,44 @@ class Field(Generic[ParamType], BaseModel):
 
 
 class BaseClient:
+    """
+    Base class for declarative HTTP clients.
+
+    Parameters:
+        base_url (str): Base URL for the client.
+        headers (Optional[dict[str, str]]): Default headers for the client.
+        default_query_params (Optional[dict[str, Any]]):
+            Default query parameters for the client.
+
+    Example:
+
+        >>> from src.declarativex import BaseClient, get, Path, Query
+        >>>
+        >>> class TodoClient(BaseClient):
+        ...     @get("/todos/{id}")
+        ...     async def get_todo_by_id(self, id: int = Path(...)) -> dict:
+        ...         ...
+        >>>
+        >>> todo_client = TodoClient("https://jsonplaceholder.typicode.com")
+        >>> todo_client.get_todo_by_id(1)
+        {
+            'userId': 1,
+            'id': 1,
+            'title': 'delectus aut autem',
+            'completed': False
+        }
+
+    """
+
     def __init__(
-        self, base_url: str, headers: Optional[dict[str, str]] = None
+        self,
+        base_url: str,
+        headers: Optional[dict[str, str]] = None,
+        default_query_params: Optional[dict[str, Any]] = None,
     ) -> None:
         self.base_url = base_url
         self.headers = headers or {}
+        self.default_query_params = default_query_params or {}
 
     @staticmethod
     def _extract_variables_from_url(template: str):
@@ -94,7 +127,7 @@ class BaseClient:
     ) -> tuple[dict[str, Any], str, Optional[dict[str, Any]], dict[str, str]]:
         path = getattr(func, "_path")
 
-        params = {}
+        params = self.default_query_params.copy()
         body = {}
         data = None
         url = f"{self.base_url}{path}"
