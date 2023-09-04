@@ -1,5 +1,5 @@
 import asyncio
-from functools import partial, wraps
+from functools import wraps
 from typing import Any, Callable, Optional, TYPE_CHECKING
 from urllib.parse import urlencode
 
@@ -9,9 +9,9 @@ if TYPE_CHECKING:
     from .client import BaseClient  # pragma: no cover
 
 
-def http_method(
+def http_method_decorator(
     method: str, path: str, timeout: Optional[int] = None
-) -> Callable:
+) -> Callable[[Callable], Callable]:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def async_wrapper(
@@ -73,12 +73,37 @@ def http_method(
     return decorator
 
 
-# HTTP Methods Decorators
-get = partial(http_method, "GET")
-post = partial(http_method, "POST")
-patch = partial(http_method, "PATCH")
-put = partial(http_method, "PUT")
-delete = partial(http_method, "DELETE")
+# Explicitly defined decorators for each HTTP method to allow IDEs to
+# provide autocompletion for the path and timeout parameters.
+
+def get(
+    path: str, timeout: Optional[int] = None
+) -> Callable[[Callable], Callable]:
+    return http_method_decorator("GET", path, timeout)
+
+
+def post(
+    path: str, timeout: Optional[int] = None
+) -> Callable[[Callable], Callable]:
+    return http_method_decorator("POST", path, timeout)
+
+
+def patch(
+    path: str, timeout: Optional[int] = None
+) -> Callable[[Callable], Callable]:
+    return http_method_decorator("PATCH", path, timeout)
+
+
+def put(
+    path: str, timeout: Optional[int] = None
+) -> Callable[[Callable], Callable]:
+    return http_method_decorator("PUT", path, timeout)
+
+
+def delete(
+    path: str, timeout: Optional[int] = None
+) -> Callable[[Callable], Callable]:
+    return http_method_decorator("DELETE", path, timeout)
 
 
 __all__ = ["get", "post", "patch", "put", "delete"]

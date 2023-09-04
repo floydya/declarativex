@@ -22,10 +22,14 @@ class Field(Generic[ParamType], BaseModel):
 
 class BaseClient:
     def __init__(
-        self, base_url: str, headers: Optional[dict[str, str]] = None
+        self,
+        base_url: str,
+        headers: Optional[dict[str, str]] = None,
+        default_query_params: Optional[dict[str, Any]] = None,
     ) -> None:
         self.base_url = base_url
         self.headers = headers or {}
+        self.default_query_params = default_query_params or {}
 
     @staticmethod
     def _extract_variables_from_url(template: str):
@@ -94,7 +98,7 @@ class BaseClient:
     ) -> tuple[dict[str, Any], str, Optional[dict[str, Any]], dict[str, str]]:
         path = getattr(func, "_path")
 
-        params = {}
+        params = self.default_query_params.copy()
         body = {}
         data = None
         url = f"{self.base_url}{path}"

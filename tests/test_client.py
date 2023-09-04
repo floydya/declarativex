@@ -91,9 +91,7 @@ class TodoClient(BaseClient):
 
 class SlowClient(BaseClient):
     @get("/delay/{delay}", timeout=1)
-    def get_data_from_slow_endpoint(
-        self, delay: int, query_delay: int
-    ):
+    def get_data_from_slow_endpoint(self, delay: int, query_delay: int):
         ...  # pragma: no cover
 
     @get("/delay/{delay}", timeout=1)
