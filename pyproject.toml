@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "declarativex"
-version = "0.1.0"
+version = "1.0.0"
 description = "Declarative HTTP client for Python"
 authors = ["Vladyslav Halatskyi <xfloydya@gmail.com>"]
 readme = "README.md"
