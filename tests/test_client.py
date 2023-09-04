@@ -34,7 +34,7 @@ class Comment(BaseModel):
 
 class TodoClient(BaseClient):
     @get("/todos/{id}")
-    async def get_todo_by_id_raw(self, id: int = Path(...)) -> dict:
+    async def get_todo_by_id_raw(self, id: int) -> dict:
         ...  # pragma: no cover
 
     @get("/todos/{id}")
@@ -53,7 +53,7 @@ class TodoClient(BaseClient):
 
     @get("/comments")
     async def get_comments_pydantic(
-        self, postId: Optional[int] = Query(default=1)
+        self, postId: Optional[int] = 1
     ) -> list[Comment]:
         ...  # pragma: no cover
 
@@ -92,7 +92,7 @@ class TodoClient(BaseClient):
 class SlowClient(BaseClient):
     @get("/delay/{delay}", timeout=1)
     def get_data_from_slow_endpoint(
-        self, delay: int = Path(...), query_delay: int = Query(...)
+        self, delay: int, query_delay: int
     ):
         ...  # pragma: no cover
 
