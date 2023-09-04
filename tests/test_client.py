@@ -3,7 +3,15 @@ from typing import Optional
 import pytest
 from pydantic import BaseModel
 
-from src.declarativex import BaseClient, BodyField, Json, Path, Query, get, post
+from src.declarativex import (
+    BaseClient,
+    BodyField,
+    Json,
+    Path,
+    Query,
+    get,
+    post,
+)
 
 
 class BaseTodo(BaseModel):
@@ -90,7 +98,9 @@ class SlowClient(BaseClient):
 
     @get("/delay/{delay}", timeout=1)
     async def async_get_data_from_slow_endpoint(
-        self, delay: int = Path(...), query_delay: int = Query(field_name="delay")
+        self,
+        delay: int = Path(...),
+        query_delay: int = Query(field_name="delay"),
     ):
         ...  # pragma: no cover
 
@@ -135,7 +145,9 @@ class TestAsyncTodoClient:
         comments = await self.client.get_comments_pydantic(postId=1)
         assert isinstance(comments, list), comments
         assert len(comments) == 5
-        assert all(isinstance(comment, Comment) for comment in comments), comments
+        assert all(
+            isinstance(comment, Comment) for comment in comments
+        ), comments
 
     @pytest.mark.asyncio
     async def test_create_post(self):
@@ -178,7 +190,9 @@ class TestSlowClient:
         self.client = SlowClient("https://httpbin.org")
 
     def test_sync_get_data_from_slow_endpoint(self):
-        response = self.client.get_data_from_slow_endpoint(delay=0, query_delay=0)
+        response = self.client.get_data_from_slow_endpoint(
+            delay=0, query_delay=0
+        )
         assert response["args"]["query_delay"] == "0"
 
     def test_sync_get_data_from_slow_endpoint_timeout(self):

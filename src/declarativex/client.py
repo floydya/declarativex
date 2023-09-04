@@ -1,15 +1,17 @@
 import inspect
-from typing import Any, Callable, Iterator, Optional, Union
+from typing import Any, Callable, Generic, Iterator, Optional, TypeVar
 
 import httpx
 from pydantic import BaseModel, ConfigDict
 
-from .dependencies import BodyField, Json, Path, Query
+from .dependencies import BaseParam, BodyField, Json, Path, Query
 
 
+ParamType = TypeVar("ParamType", bound=BaseParam)
 
-class Field(BaseModel):
-    location: Union[Path, Query, BodyField, Json]
+
+class Field(Generic[ParamType], BaseModel):
+    location: ParamType
     type: Any
     value: Any
     name: str
@@ -18,7 +20,9 @@ class Field(BaseModel):
 
 
 class BaseClient:
-    def __init__(self, base_url: str, headers: dict[str, str] = None) -> None:
+    def __init__(
+        self, base_url: str, headers: Optional[dict[str, str]] = None
+    ) -> None:
         self.base_url = base_url
         self.headers = headers or {}
 
@@ -36,13 +40,8 @@ class BaseClient:
             if val.default is not inspect.Parameter.empty
         }
 
-    def _get_params(self, func: Callable, **kwargs: Any) -> Iterator[tuple[str, Field]]:
+    def _get_params(self, func: Callable, **kwargs: Any) -> Iterator[Field]:
         for key, options in self._get_default_args(func, kwargs).items():
-            optional = (
-                hasattr(options.type, "__origin__")
-                and options.type.__origin__ == Union
-                and None in options.type.__args__
-            )
             # Apply default value if parameter is optional and not provided
             if options.value is None:
                 options.value = options.location.default
@@ -57,7 +56,7 @@ class BaseClient:
             elif isinstance(options.location, Query):
                 if options.value is None:
                     continue
-            yield key, options
+            yield options
 
     def prepare_request(
         self, func: Callable, **kwargs: Any
@@ -68,7 +67,7 @@ class BaseClient:
         body = {}
         data = None
         url = f"{self.base_url}{path}"
-        for key, options in self._get_params(func, **kwargs):
+        for options in self._get_params(func, **kwargs):
             if isinstance(options.location, Path):
                 url = url.format(**{options.name: options.value})
             elif isinstance(options.location, Query):
@@ -92,10 +91,14 @@ class BaseClient:
         json_response = response.json()
         if not return_type:
             return json_response
-        if isinstance(json_response, dict) and issubclass(return_type, BaseModel):
+        if isinstance(json_response, dict) and issubclass(
+            return_type, BaseModel
+        ):
             return return_type.model_validate(json_response)
-        elif isinstance(json_response, list):
-            if return_type.__args__ and issubclass(return_type.__args__[0], BaseModel):
+        if isinstance(json_response, list):
+            if return_type.__args__ and issubclass(
+                return_type.__args__[0], BaseModel
+            ):
                 return [
                     return_type.__args__[0].model_validate(item)
                     for item in json_response

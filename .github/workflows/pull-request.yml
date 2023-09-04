@@ -47,7 +47,7 @@ jobs:
       - name: Run Pylint
         run: |
           output_file="pylint-output.txt"
-          poetry run pylint app/ | tee $output_file
+          poetry run pylint src/ | tee $output_file
       - name: Annotate code with Pylint results
         run: |
           output_file="pylint-output.txt"
@@ -75,3 +75,26 @@ jobs:
         with:
           pytest-coverage-path: ./pytest-coverage.txt
           junitxml-path: ./pytest.xml
+
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: poetry
+      - name: Install dependencies
+        run: poetry install
+      - name: Run mypy
+        run: |
+          output_file="mypy-output.txt"
+          poetry run mypy src/ | tee $output_file
+      - name: Annotate code with mypy results
+        run: |
+          output_file="mypy-output.txt"
+          python .github/workflows/annotate-mypy.py $output_file

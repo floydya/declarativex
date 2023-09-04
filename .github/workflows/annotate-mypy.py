@@ -9,13 +9,13 @@ def annotate_pylint_output(file_path: str) -> None:
 
 
 def process_output(f: TextIO) -> None:
-    pylint_regex = re.compile(r"^(.+):(\d+):(\d+): (\w+): (.+)$")
+    pylint_regex = re.compile(r"^(.+):(\d+): (\w+): (.+) \[(.+)\]$")
     exit_code = 0
 
     for line in f.readlines():
         match = pylint_regex.match(line)
         if match:
-            file_path, line_num, _, issue_type, description = match.groups()
+            file_path, line_num, issue_type, description, _ = match.groups()
             issue_type = issue_type.lower()
             annotation_level = (
                 "warning" if issue_type == "warning" else "error"

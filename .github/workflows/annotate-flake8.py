@@ -16,7 +16,9 @@ def process_output(f: TextIO) -> None:
         match = flake8_regex.match(line.strip())
         if match:
             file_path, line_num, _, issue_type, description = match.groups()
-            annotation_level = "warning" if issue_type.startswith("W") else "error"
+            annotation_level = (
+                "warning" if issue_type.startswith("W") else "error"
+            )
 
             # GitHub Annotation Format
             print(

@@ -1,6 +1,6 @@
 import asyncio
 from functools import partial, wraps
-from typing import Any, Callable, TYPE_CHECKING
+from typing import Any, Callable, Optional, TYPE_CHECKING
 from urllib.parse import urlencode
 
 import httpx
@@ -9,11 +9,17 @@ if TYPE_CHECKING:
     from .client import BaseClient  # pragma: no cover
 
 
-def http_method(method: str, path: str, timeout: int = None) -> Callable:
+def http_method(
+    method: str, path: str, timeout: Optional[int] = None
+) -> Callable:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        async def async_wrapper(cls_instance: 'BaseClient', *args: Any, **kwargs: Any) -> Any:
-            params, url, data, headers = cls_instance.prepare_request(func, **kwargs)
+        async def async_wrapper(
+            cls_instance: "BaseClient", *args: Any, **kwargs: Any
+        ) -> Any:
+            params, url, data, headers = cls_instance.prepare_request(
+                func, **kwargs
+            )
             if params:
                 url = f"{url}?{urlencode(params)}"
             try:
@@ -23,7 +29,7 @@ def http_method(method: str, path: str, timeout: int = None) -> Callable:
                         url,
                         headers=headers,
                         json=data,
-                        timeout=timeout
+                        timeout=timeout,
                     )
             except httpx.ReadTimeout:
                 raise TimeoutError(
@@ -32,8 +38,12 @@ def http_method(method: str, path: str, timeout: int = None) -> Callable:
             return cls_instance.process_response(response, func)
 
         @wraps(func)
-        def sync_wrapper(cls_instance: 'BaseClient', *args: Any, **kwargs: Any) -> Any:
-            params, url, data, headers = cls_instance.prepare_request(func, **kwargs)
+        def sync_wrapper(
+            cls_instance: "BaseClient", *args: Any, **kwargs: Any
+        ) -> Any:
+            params, url, data, headers = cls_instance.prepare_request(
+                func, **kwargs
+            )
             if params:
                 url = f"{url}?{urlencode(params)}"
             try:
@@ -43,7 +53,7 @@ def http_method(method: str, path: str, timeout: int = None) -> Callable:
                         url,
                         headers=headers,
                         json=data,
-                        timeout=timeout
+                        timeout=timeout,
                     )
             except httpx.ReadTimeout:
                 raise TimeoutError(
@@ -54,7 +64,12 @@ def http_method(method: str, path: str, timeout: int = None) -> Callable:
         setattr(func, "_http_method", method)
         setattr(func, "_path", path)
 
-        return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
+        return (
+            async_wrapper
+            if asyncio.iscoroutinefunction(func)
+            else sync_wrapper
+        )
+
     return decorator
 
 
