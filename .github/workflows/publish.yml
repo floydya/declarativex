@@ -9,12 +9,22 @@ jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     steps:
-
     - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Build and publish to PyPI
-      uses: JRubics/poetry-publish@v1.17
+      uses: actions/checkout@v3
+    - name: Install Poetry
+      run: pipx install poetry
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
-        python_version: "3.11"
-        pypi_token: ${{ secrets.POETRY_PYPI_TOKEN }}
+        python-version: '3.11'
+        cache: poetry
+    - name: Install dependencies
+      run: poetry install
+    - name: Set version in pyproject.toml
+      run: |
+        TAG_NAME=${GITHUB_REF#refs/tags/}
+        sed -i "s/version = \".*\"/version = \"$TAG_NAME\"/g" pyproject.toml
+    - name: Define PyPI token
+      run: poetry config pypi-token.pypi ${{ secrets.POETRY_PYPI_TOKEN }}
+    - name: Build and publish to PyPI
+      run: poetry publish --build
