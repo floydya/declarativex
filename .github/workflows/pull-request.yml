@@ -1,0 +1,77 @@
+name: Pull request
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  flake8:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: poetry
+      - name: Install dependencies
+        run: poetry install
+      - name: Run Flake8
+        run: |
+          output_file="flake8-output.txt"
+          poetry run flake8 . | tee $output_file
+
+      - name: Annotate code with Flake8 results
+        run: |
+          output_file="flake8-output.txt"
+          python .github/workflows/annotate-flake8.py $output_file
+
+  pylint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: poetry
+      - name: Install dependencies
+        run: poetry install
+      - name: Run Pylint
+        run: |
+          output_file="pylint-output.txt"
+          poetry run pylint app/ | tee $output_file
+      - name: Annotate code with Pylint results
+        run: |
+          output_file="pylint-output.txt"
+          python .github/workflows/annotate-pylint.py $output_file
+
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: poetry
+      - name: Install dependencies
+        run: poetry install
+      - name: Build coverage file
+        run: |
+          pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=app tests/ | tee pytest-coverage.txt
+      - name: Pytest coverage comment
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-coverage-path: ./pytest-coverage.txt
+          junitxml-path: ./pytest.xml
