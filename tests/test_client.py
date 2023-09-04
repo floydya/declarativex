@@ -9,8 +9,11 @@ from src.declarativex import (
     Json,
     Path,
     Query,
+    delete,
     get,
+    patch,
     post,
+    put,
 )
 
 
@@ -42,12 +45,14 @@ class TodoClient(BaseClient):
         ...  # pragma: no cover
 
     @get("/comments")
-    async def get_comments_raw(self, postId: int = Query(...)) -> list[dict]:
+    async def get_comments_raw(
+        self, post_id: int = Query(field_name="postId")
+    ) -> list[dict]:
         ...  # pragma: no cover
 
     @get("/posts/{postId}/comments")
     async def get_comments_value_error_path(
-        self, postId: Optional[int] = Path(...)
+        self, post_id: Optional[int] = Path(field_name="postId")
     ) -> list[Comment]:
         ...  # pragma: no cover
 
@@ -62,7 +67,7 @@ class TodoClient(BaseClient):
         self,
         title: str = BodyField(...),
         body: str = BodyField(...),
-        userId: int = BodyField(...),
+        user_id: int = BodyField(field_name="userId"),
     ) -> dict:
         """
         It will produce a request:
@@ -82,9 +87,24 @@ class TodoClient(BaseClient):
     ) -> dict:
         ...  # pragma: no cover
 
-    @post("/posts")
-    async def create_post_mixed(
-        self, body: dict = Json(...), userId: int = BodyField(...)
+    @patch("/posts/{postId}")
+    async def update_post_mixed(
+        self,
+        post_id: int = Path(field_name="postId"),
+        body: dict = Json(...),
+        user_id: int = BodyField(field_name="userId"),
+    ) -> dict:
+        ...  # pragma: no cover
+
+    @put("/posts/{postId}")
+    async def update_post(
+        self, post_id: int = Path(field_name="postId"), body: dict = Json(...)
+    ) -> dict:
+        ...  # pragma: no cover
+
+    @delete("/posts/{postId}")
+    async def delete_post(
+        self, post_id: int = Path(field_name="postId")
     ) -> dict:
         ...  # pragma: no cover
 
@@ -135,7 +155,7 @@ class TestAsyncTodoClient:
             await self.client.get_comments_value_error_path()
         assert (
             str(err.value)
-            == "Parameter with key='postId' is required and has no default"
+            == "Parameter with key='post_id' is required and has no default"
         )
 
     @pytest.mark.asyncio
@@ -170,16 +190,35 @@ class TestAsyncTodoClient:
         assert created_post["id"] == 101
 
     @pytest.mark.asyncio
-    async def test_create_post_mixed(self):
-        created_post = await self.client.create_post_mixed(
+    async def test_update_post_mixed(self):
+        created_post = await self.client.update_post_mixed(
+            post_id=1,
             body={
                 "title": "foo",
                 "completed": False,
             },
-            userId=1,
+            user_id=1,
         )
         assert isinstance(created_post, dict)
-        assert created_post["id"] == 101
+        assert created_post["id"] == 1
+
+    @pytest.mark.asyncio
+    async def test_update_post(self):
+        updated_post = await self.client.update_post(
+            post_id=1,
+            body={
+                "title": "foo",
+                "completed": False,
+            },
+        )
+        assert isinstance(updated_post, dict)
+        assert updated_post["id"] == 1
+
+    @pytest.mark.asyncio
+    async def test_delete_post(self):
+        deleted_post = await self.client.delete_post(post_id=1)
+        assert isinstance(deleted_post, dict)
+        assert deleted_post == {}
 
 
 class TestSlowClient:

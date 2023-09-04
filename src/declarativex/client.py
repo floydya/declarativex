@@ -21,6 +21,35 @@ class Field(Generic[ParamType], BaseModel):
 
 
 class BaseClient:
+    """
+    Base class for declarative HTTP clients.
+
+    Parameters:
+        base_url (str): Base URL for the client.
+        headers (Optional[dict[str, str]]): Default headers for the client.
+        default_query_params (Optional[dict[str, Any]]):
+            Default query parameters for the client.
+
+    Example:
+
+        >>> from src.declarativex import BaseClient, get, Path, Query
+        >>>
+        >>> class TodoClient(BaseClient):
+        ...     @get("/todos/{id}")
+        ...     async def get_todo_by_id(self, id: int = Path(...)) -> dict:
+        ...         ...
+        >>>
+        >>> todo_client = TodoClient("https://jsonplaceholder.typicode.com")
+        >>> todo_client.get_todo_by_id(1)
+        {
+            'userId': 1,
+            'id': 1,
+            'title': 'delectus aut autem',
+            'completed': False
+        }
+
+    """
+
     def __init__(
         self,
         base_url: str,
