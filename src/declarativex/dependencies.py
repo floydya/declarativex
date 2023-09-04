@@ -20,4 +20,4 @@ Json = type("Json", (BaseParam,), {})
 Timeout = pydantic.create_model("Timeout", seconds=(int, ...))
 
 
-__all__ = ["Path", "Query", "BodyField", "Json", "Timeout"]
+__all__ = ["BaseParam", "Path", "Query", "BodyField", "Json", "Timeout"]
