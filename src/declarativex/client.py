@@ -1,4 +1,5 @@
 import inspect
+from string import Formatter
 from typing import Any, Callable, Generic, Iterator, Optional, TypeVar
 
 import httpx
@@ -27,18 +28,48 @@ class BaseClient:
         self.headers = headers or {}
 
     @staticmethod
-    def _get_default_args(func: Callable, kwargs) -> dict[str, Field]:
+    def _extract_variables_from_url(template: str):
+        formatter = Formatter()
+        variables = []
+        for (
+            _,
+            field_name,
+            _,
+            _,
+        ) in formatter.parse(template):
+            if field_name:
+                variables.append(field_name)
+        return variables
+
+    @classmethod
+    def _get_default_args(cls, func: Callable, kwargs) -> dict[str, Field]:
         signature = inspect.signature(func)
-        return {
-            key: Field(
-                location=val.default,
-                type=func.__annotations__.get(key),
-                value=kwargs.get(key),
-                name=val.default.field_name if val.default.field_name else key,
-            )
-            for key, val in signature.parameters.items()
-            if val.default is not inspect.Parameter.empty
-        }
+        url_template_variables = cls._extract_variables_from_url(
+            getattr(func, "_path")
+        )
+        fields = {}
+        for key, val in signature.parameters.items():
+            if val.default is not inspect.Parameter.empty and isinstance(
+                val.default, BaseParam
+            ):
+                fields[key] = Field(
+                    location=val.default,
+                    type=func.__annotations__.get(key),
+                    value=kwargs.get(key),
+                    name=val.default.field_name
+                    if val.default.field_name
+                    else key,
+                )
+            else:
+                fields[key] = Field(
+                    location=Path()
+                    if key in url_template_variables
+                    else Query(),
+                    type=func.__annotations__.get(key),
+                    value=kwargs.get(key),
+                    name=key,
+                )
+        return fields
 
     def _get_params(self, func: Callable, **kwargs: Any) -> Iterator[Field]:
         for key, options in self._get_default_args(func, kwargs).items():
