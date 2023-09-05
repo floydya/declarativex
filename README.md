@@ -25,14 +25,15 @@ Here's the lowdown on the different param types:
 - `default` - sets a default value.
 - `field_name` - Changes the field name at the `Client` implementation level.
 
-#### 🛤️ Path
+### 🛤️ Path
 
 Pass data right into the URL path like so:
 
 ```python
-@get("/some/path/{uuid}/")
-def get_some_data(uuid: UUID = Path(...)):
-    ...
+class SomeClient(BaseClient):
+    @get("/some/path/{uuid}/")
+    def get_some_data(uuid: UUID = Path(...)):
+     ...
 ```
 
 But hey, if the arg name matches the path variable, that's your default.
@@ -40,19 +41,21 @@ But hey, if the arg name matches the path variable, that's your default.
 So the example above equals:
 
 ```python
-@get("/some/path/{uuid}/")
-def get_some_data(uuid: UUID):
-    ...
+class SomeClient(BaseClient):
+    @get("/some/path/{uuid}/")
+    def get_some_data(uuid: UUID):
+        ...
 ```
 
-#### 🔍 Query
+### 🔍 Query
 
 Want URL query params? No biggie:
 
 ```python
-@get("/some/path/")
-def get_some_data(order_by: str = Query(default="name_asc", field_name="orderBy")):
-    ...
+class SomeClient(BaseClient):
+    @get("/some/path/")
+    def get_some_data(order_by: str = Query(default="name_asc", field_name="orderBy")):
+        ...
 ```
 
 > Goodbye, lowerCamelCase! Hello, Pythonic style! 🐍
@@ -60,12 +63,13 @@ def get_some_data(order_by: str = Query(default="name_asc", field_name="orderBy"
 If we had a snake_case `order_by` field in external API we deal with, the code will be like this:
 
 ```python
-@get("/some/path/")
-def get_some_data(order_by: str = "name_asc"):
-    ...
+class SomeClient(BaseClient):
+    @get("/some/path/")
+    def get_some_data(order_by: str = "name_asc"):
+        ...
 ```
 
-#### 📦 BodyField
+### 📦 BodyField
 
 Let's imagine, that we have two data sources and we need them to make a POST request with.
 
@@ -95,7 +99,7 @@ def do_something():
 
 If you've actually given in and made that dictionary, check out the next parameter type... Who did I even bother for?
 
-#### 📄 Json
+### 📄 Json
 
 Haha, so you did end up creating that damn dictionary, huh? Alright, now let's see how you're gonna use it:
 
