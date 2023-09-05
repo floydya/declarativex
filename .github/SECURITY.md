@@ -9,6 +9,6 @@ Hey, here's the deal:
 ## Spotted a Security Issue? 🚨
 Hold up! If you think you've found a security flaw in declarativex, please don’t make it public by dropping an issue on GitHub.
 
-Shoot an email over to xfloydya@gmail.com instead. I promise to hit you back ASAP and work on patching that up. 🤝
+Create a topic in [Security](https://github.com/floydya/declarativex/security/advisories) tab instead. I promise to hit you back ASAP and work on patching that up. 🤝
 
 That's all, folks! Stay secure! 🚀
