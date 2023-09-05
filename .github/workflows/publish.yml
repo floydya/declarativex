@@ -6,25 +6,89 @@ on:
       - '*'
 
 jobs:
-  build-and-publish:
+  flake8:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    - name: Install Poetry
-      run: pipx install poetry
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-        cache: poetry
-    - name: Install dependencies
-      run: poetry install
-    - name: Set version in pyproject.toml
-      run: |
-        TAG_NAME=${GITHUB_REF#refs/tags/}
-        sed -i "s/version = \".*\"/version = \"$TAG_NAME\"/g" pyproject.toml
-    - name: Define PyPI token
-      run: poetry config pypi-token.pypi ${{ secrets.POETRY_PYPI_TOKEN }}
-    - name: Build and publish to PyPI
-      run: poetry publish --build
+      - name: Setup environment and install dependencies
+        uses: ./.github/actions/setup-environment
+        with:
+          python-version: '3.11'
+          pydantic-version: '2'
+      - name: Run Flake8
+        run: poetry run flake8 src/declarativex/
+
+  pylint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup environment and install dependencies
+        uses: ./.github/actions/setup-environment
+        with:
+          python-version: '3.11'
+          pydantic-version: '2'
+      - name: Run Pylint
+        run: poetry run pylint src/declarativex/
+
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup environment and install dependencies
+        uses: ./.github/actions/setup-environment
+        with:
+          python-version: '3.11'
+          pydantic-version: '2'
+      - name: Run Mypy
+        run: poetry run mypy src/declarativex/
+
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        pydantic-version: ["1", "2"]
+    steps:
+      - name: Setup environment and install dependencies
+        uses: ./.github/actions/setup-environment
+        with:
+          python-version: ${{ matrix.python-version }}
+          pydantic-version: ${{ matrix.pydantic-version }}
+      - name: Run Pytest
+        run: poetry run pytest
+
+  build-and-publish:
+    needs: [flake8, pylint, mypy, pytest]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Setup environment and install dependencies
+        uses: ./.github/actions/setup-environment
+        with:
+          python-version: '3.11'
+          pydantic-version: '2'
+      - name: Set version in pyproject.toml
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          sed -i "s/version = \".*\"/version = \"$TAG_NAME\"/g" pyproject.toml
+          TAG_NAME=$(echo "$TAG_NAME" | sed 's/^v//')
+          sed -i 's/__version__ = ".*"/__version__ = "'"$TAG_NAME"'"/g' src/declarativex/__init__.py
+      - name: Define PyPI token
+        run: poetry config pypi-token.pypi ${{ secrets.POETRY_PYPI_TOKEN }}
+      - name: Build and publish to PyPI
+        run: poetry publish --build
+
+  publish-docs:
+    needs: [build-and-publish]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+      - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
+      - uses: actions/cache@v3
+        with:
+          key: mkdocs-${{ env.cache_id }}
+          path: .cache
+          restore-keys: |
+            mkdocs-
+      - run: pip install mkdocs-material
+      - run: mkdocs gh-deploy --force

@@ -1,0 +1,50 @@
+site_name: DeclarativeX
+site_description: DeclarativeX is a Python library for building declarative APIs.
+strict: true
+site_url: https://declarativex.github.io
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: deep purple
+    accent: deep purple
+  features:
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Core Concepts:
+    - BaseClient: Core_Concepts/BaseClient.md
+    # - Decorators: Core_Concepts/Decorators.md
+    # - Parameters: Core_Concepts/Parameters.md
+  - Compatibility: Compatibility.md
+  - Testing: Testing.md
+  # - Examples: Examples/Examples.md
+  - Contributing: Contributing.md
+  - License: License.md
+
+repo_name: floydya/declarativex
+repo_url: https://github.com/floydya/declarativex
+edit_uri: edit/main/docs/
+
+plugins:
+  - search
+  - offline
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - toc:
+      permalink: true
+      title: On this page
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.extra
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg

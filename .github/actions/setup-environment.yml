@@ -1,0 +1,30 @@
+name: 'Setup Environment and Install Dependencies'
+description: 'Setup Python environment and install dependencies using Poetry'
+on: [workflow_call]
+
+inputs:
+  python-version:
+    description: 'Python version to setup'
+    required: true
+    default: '3.11'
+  pydantic-version:
+    description: 'Pydantic version to install'
+    required: false
+    default: '2'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Install Poetry
+      run: pipx install poetry
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: poetry
+    - name: Install dependencies
+      run: poetry install
+    - name: Install Pydantic
+      run: poetry add pydantic==${{ inputs.pydantic-version }}
