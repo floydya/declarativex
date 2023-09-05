@@ -1,23 +1,29 @@
 import inspect
+import warnings
 from string import Formatter
 from typing import Any, Callable, Generic, Iterator, Optional, TypeVar
 
 import httpx
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
+from .compatibility import parse_obj, to_dict
 from .dependencies import BaseParam, BodyField, Json, Path, Query
 
 
 ParamType = TypeVar("ParamType", bound=BaseParam)
 
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=DeprecationWarning)
 
-class Field(Generic[ParamType], BaseModel):
-    location: ParamType
-    type: Any
-    value: Any
-    name: str
+    # Compatible with pydantic v1 and v2
+    class Field(Generic[ParamType], BaseModel):
+        location: ParamType
+        type: Any
+        value: Any
+        name: str
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+        class Config:
+            arbitrary_types_allowed = True
 
 
 class BaseClient:
@@ -25,29 +31,9 @@ class BaseClient:
     Base class for declarative HTTP clients.
 
     Parameters:
-        base_url (str): Base URL for the client.
-        headers (Optional[dict[str, str]]): Default headers for the client.
-        default_query_params (Optional[dict[str, Any]]):
-            Default query parameters for the client.
-
-    Example:
-
-        >>> from src.declarativex import BaseClient, get, Path, Query
-        >>>
-        >>> class TodoClient(BaseClient):
-        ...     @get("/todos/{id}")
-        ...     async def get_todo_by_id(self, id: int = Path(...)) -> dict:
-        ...         ...
-        >>>
-        >>> todo_client = TodoClient("https://jsonplaceholder.typicode.com")
-        >>> todo_client.get_todo_by_id(1)
-        {
-            'userId': 1,
-            'id': 1,
-            'title': 'delectus aut autem',
-            'completed': False
-        }
-
+        base_url: Base URL for the client.
+        headers: Default headers for the client.
+        default_query_params: Default query parameters for the client.
     """
 
     def __init__(
@@ -62,17 +48,7 @@ class BaseClient:
 
     @staticmethod
     def _extract_variables_from_url(template: str):
-        formatter = Formatter()
-        variables = []
-        for (
-            _,
-            field_name,
-            _,
-            _,
-        ) in formatter.parse(template):
-            if field_name:
-                variables.append(field_name)
-        return variables
+        return [field[1] for field in Formatter().parse(template) if field[1]]
 
     @classmethod
     def _get_default_args(cls, func: Callable, kwargs) -> dict[str, Field]:
@@ -122,6 +98,9 @@ class BaseClient:
                     continue
             yield options
 
+    def validate_func(self, func: Callable) -> None:
+        ...
+
     def prepare_request(
         self, func: Callable, **kwargs: Any
     ) -> tuple[dict[str, Any], str, Optional[dict[str, Any]], dict[str, str]]:
@@ -140,7 +119,7 @@ class BaseClient:
                 body[options.name] = options.value
             elif isinstance(options.location, Json):
                 data = (
-                    options.value.model_dump()
+                    to_dict(options.value)
                     if isinstance(options.value, BaseModel)
                     else options.value
                 )
@@ -158,13 +137,13 @@ class BaseClient:
         if isinstance(json_response, dict) and issubclass(
             return_type, BaseModel
         ):
-            return return_type.model_validate(json_response)
+            return parse_obj(return_type, json_response)
         if isinstance(json_response, list):
             if return_type.__args__ and issubclass(
                 return_type.__args__[0], BaseModel
             ):
                 return [
-                    return_type.__args__[0].model_validate(item)
+                    parse_obj(return_type.__args__[0], item)
                     for item in json_response
                 ]
         return json_response
