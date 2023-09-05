@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install Poetry
         run: pipx install poetry
       - name: Set up Python
@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install Poetry
         run: pipx install poetry
       - name: Set up Python
@@ -55,41 +55,39 @@ jobs:
 
   pytest:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        poetry-version: ["1", "2"]
+      fail-fast: false
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install Poetry
         run: pipx install poetry
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
           cache: poetry
       - name: Install dependencies
         run: poetry install
       - name: Build coverage file
         run: |
           poetry run pytest --junitxml=pytest.xml --cov=src/declarativex tests/ | tee pytest-coverage.txt
-      - name: ls
-        run: ls -la
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
+        if: matrix.python-version == '3.11' && matrix.poetry-version == '2'
         with:
           pytest-coverage-path: pytest-coverage.txt
           junitxml-path: pytest.xml
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: pytest-artifacts
-          path: |
-            pytest.xml
-            pytest-coverage.txt
 
   mypy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install Poetry
         run: pipx install poetry
       - name: Set up Python
