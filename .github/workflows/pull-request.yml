@@ -9,6 +9,8 @@ jobs:
   flake8:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Setup environment and install dependencies
         uses: ./.github/actions/setup-environment
         with:
@@ -27,6 +29,8 @@ jobs:
   pylint:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Setup environment and install dependencies
         uses: ./.github/actions/setup-environment
         with:
@@ -50,6 +54,8 @@ jobs:
       fail-fast: false
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Setup environment and install dependencies
         uses: ./.github/actions/setup-environment
         with:
@@ -68,6 +74,8 @@ jobs:
   mypy:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Setup environment and install dependencies
         uses: ./.github/actions/setup-environment
         with:

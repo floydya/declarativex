@@ -9,6 +9,8 @@ jobs:
   flake8:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Setup environment and install dependencies
         uses: ./.github/actions/setup-environment
         with:
@@ -20,6 +22,8 @@ jobs:
   pylint:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Setup environment and install dependencies
         uses: ./.github/actions/setup-environment
         with:
@@ -31,6 +35,8 @@ jobs:
   mypy:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Setup environment and install dependencies
         uses: ./.github/actions/setup-environment
         with:
@@ -46,6 +52,8 @@ jobs:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
         pydantic-version: ["1", "2"]
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Setup environment and install dependencies
         uses: ./.github/actions/setup-environment
         with:
@@ -59,6 +67,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Setup environment and install dependencies
         uses: ./.github/actions/setup-environment
         with:
