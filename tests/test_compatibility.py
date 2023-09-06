@@ -1,3 +1,4 @@
+import dataclasses
 import importlib
 from typing import Any
 from unittest import mock
@@ -77,6 +78,19 @@ def test_to_dict_for_version_2() -> None:
     assert result == {"mock": "data"}
 
 
+@pytest.mark.usefixtures("pydantic_mock", "pydantic_version_2")
+def test_parse_obj_as_version_2() -> None:
+
+    @dataclasses.dataclass
+    class Data:
+        test: str
+
+    result = src.declarativex.compatibility.parse_obj_as(
+        Data, {"test": "data"}
+    )
+    assert isinstance(result, Data)
+
+
 @pytest.mark.usefixtures("pydantic_mock", "pydantic_version_1")
 def test_parse_obj_for_version_1() -> None:
     result = src.declarativex.compatibility.parse_obj(
@@ -99,3 +113,16 @@ def test_to_dict_for_version_1() -> None:
         MockBaseModel(), mock_data="data"
     )
     assert result == {"mock": "data"}
+
+
+@pytest.mark.usefixtures("pydantic_mock", "pydantic_version_1")
+def test_parse_obj_as_version_1() -> None:
+
+    @dataclasses.dataclass
+    class Data:
+        test: str
+
+    result = src.declarativex.compatibility.parse_obj_as(
+        Data, {"test": "data"}
+    )
+    assert isinstance(result, Data)

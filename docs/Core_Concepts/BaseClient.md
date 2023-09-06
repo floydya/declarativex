@@ -28,6 +28,7 @@ The `base_url` is where all the magic starts. It's the root URL that your client
     ```{.python title="my_client.py"}
     from declarativex import BaseClient
 
+
     class MyClient(BaseClient):
         base_url = "https://api.example.com"
 
@@ -41,6 +42,7 @@ The `base_url` is where all the magic starts. It's the root URL that your client
     ```{.python title="my_client.py"}
     from declarativex import BaseClient
 
+
     class MyClient(BaseClient):
         pass
 
@@ -52,6 +54,7 @@ The `base_url` is where all the magic starts. It's the root URL that your client
     ```{.python title="my_client.py"}
     from declarativex import BaseClient
 
+
     class MyClient(BaseClient):
         def __init__(self, *args, **kwargs):
             kwargs["base_url"] = "https://api.example.com"
@@ -61,7 +64,7 @@ The `base_url` is where all the magic starts. It's the root URL that your client
     client = MyClient()
     ```
 
-### `headers`
+### `default_headers`
 
 Need to add some custom headers? No worries, BaseClient has got you covered.
 
@@ -74,13 +77,13 @@ Need to add some custom headers? No worries, BaseClient has got you covered.
 
     class MyClient(BaseClient):
         base_url = "https://api.example.com"
-        headers = {"Authorization": f"Bearer {settings.EXAMPLE_API_TOKEN}"}
+        default_headers = {"Authorization": f"Bearer {settings.EXAMPLE_API_TOKEN}"}
 
 
     client = MyClient()
     ```
     !!! tip
-        Prefer this approach if you don't need to change the `header` at runtime.
+        Prefer this approach if you don't need to change the headers at runtime.
 
 === "Using __init__ argument"
     ```{.python title="my_client.py"}
@@ -95,7 +98,7 @@ Need to add some custom headers? No worries, BaseClient has got you covered.
 
     client = MyClient(
         base_url="https://api.example.com",
-        headers={"Authorization": f"Bearer {settings.EXAMPLE_API_TOKEN}"
+        default_headers={"Authorization": f"Bearer {settings.EXAMPLE_API_TOKEN}"
     )
     ```
 
@@ -103,10 +106,69 @@ Need to add some custom headers? No worries, BaseClient has got you covered.
     ```{.python title="my_client.py"}
     from declarativex import BaseClient
 
+    from myapp.settings import settings
+
+
     class MyClient(BaseClient):
         def __init__(self, *args, **kwargs):
             kwargs["base_url"] = "https://api.example.com"
-            kwargs["headers"] = {"Authorization": "Bearer <token>"}
+            kwargs["default_headers"] = {"Authorization": "Bearer <token>"}
+            super().__init__(*args, **kwargs)
+
+
+    client = MyClient()
+    ```
+
+### `default_query_params`
+
+Do you have Steam API integration :melting_face:? Then you know how annoying it is to add the `key` parameter to every
+request. Well, `BaseClient` has got you covered.
+
+=== "Using class attribute"
+    ```{.python title="my_client.py"}
+    from declarativex import BaseClient
+
+    from myapp.settings import settings
+
+
+    class MyClient(BaseClient):
+        base_url = "https://api.example.com"
+        default_query_params = {"key": settings.STEAM_API_KEY}
+
+
+    client = MyClient()
+    ```
+    !!! tip
+        Prefer this approach if you don't need to change the `key` at runtime.
+
+=== "Using __init__ argument"
+    ```{.python title="my_client.py"}
+    from declarativex import BaseClient
+
+    from myapp.settings import settings
+
+
+    class MyClient(BaseClient):
+        pass
+
+
+    client = MyClient(
+        base_url="https://api.example.com",
+        default_query_params={"key": settings.STEAM_API_KEY}
+    )
+    ```
+
+=== "Overriding constructor"
+    ```{.python title="my_client.py"}
+    from declarativex import BaseClient
+    
+    from myapp.settings import settings
+
+
+    class MyClient(BaseClient):
+        def __init__(self, *args, **kwargs):
+            kwargs["base_url"] = "https://api.example.com"
+            kwargs["default_query_params"] = {"key": settings.STEAM_API_KEY}
             super().__init__(*args, **kwargs)
 
 
@@ -118,4 +180,4 @@ Need to add some custom headers? No worries, BaseClient has got you covered.
 So there you have it, the `BaseClient` in all its glory. It's the cornerstone of DeclarativeX, designed to make your
 life easier and your code cleaner.
 
-Feel like diving deeper? Check out the [Decorators](./Decorators.md) and [Parameters](./Parameters.md) sections next.
+Feel like diving deeper? Check out the [Declaration](./Declaration.md) and [Parameters](./Parameters.md) sections next.

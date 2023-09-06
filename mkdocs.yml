@@ -7,16 +7,24 @@ theme:
   name: material
   palette:
     scheme: slate
-    primary: deep purple
-    accent: deep purple
+    primary: custom
+    accent: custom
   features:
     - content.code.copy
+
+extra:
+  analytics:
+    provider: google
+    property: G-RZ1VN0YPGC
+
+extra_css:
+  - stylesheets/extra.css
 
 nav:
   - Home: index.md
   - Core Concepts:
     - BaseClient: Core_Concepts/BaseClient.md
-    # - Decorators: Core_Concepts/Decorators.md
+    - Declaration: Core_Concepts/Declaration.md
     # - Parameters: Core_Concepts/Parameters.md
   - Compatibility: Compatibility.md
   - Testing: Testing.md
@@ -36,6 +44,7 @@ markdown_extensions:
   - admonition
   - attr_list
   - def_list
+  - md_in_html
   - toc:
       permalink: true
       title: On this page
