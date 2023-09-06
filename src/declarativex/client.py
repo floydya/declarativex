@@ -106,13 +106,14 @@ class BaseClient:
     ) -> tuple[dict[str, Any], str, Optional[dict[str, Any]], dict[str, str]]:
         path = getattr(func, "_path")
 
+        path_params = {}
         params = self.default_query_params.copy()
         body = {}
         data = None
         url = f"{self.base_url}{path}"
         for options in self._get_params(func, **kwargs):
             if isinstance(options.location, Path):
-                url = url.format(**{options.name: options.value})
+                path_params[options.name] = options.value
             elif isinstance(options.location, Query):
                 params[options.name] = options.value
             elif isinstance(options.location, BodyField):
@@ -124,6 +125,7 @@ class BaseClient:
                     else options.value
                 )
 
+        url = url.format(**path_params)
         data = (data or {}) | body
         return params, url, data, self.headers
 
