@@ -11,11 +11,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Setup environment and install dependencies
-        uses: ./.github/actions/setup-environment
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-          pydantic-version: '2'
+          cache: poetry
+      - name: Install dependencies
+        run: poetry install
       - name: Run Flake8
         run: poetry run flake8 src/declarativex/
 
@@ -24,11 +28,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Setup environment and install dependencies
-        uses: ./.github/actions/setup-environment
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-          pydantic-version: '2'
+          cache: poetry
+      - name: Install dependencies
+        run: poetry install
       - name: Run Pylint
         run: poetry run pylint src/declarativex/
 
@@ -37,11 +45,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Setup environment and install dependencies
-        uses: ./.github/actions/setup-environment
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-          pydantic-version: '2'
+          cache: poetry
+      - name: Install dependencies
+        run: poetry install
       - name: Run Mypy
         run: poetry run mypy src/declarativex/
 
@@ -54,11 +66,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Setup environment and install dependencies
-        uses: ./.github/actions/setup-environment
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-          pydantic-version: ${{ matrix.pydantic-version }}
+          cache: poetry
+      - name: Install dependencies
+        run: poetry install
+      - name: Install Pydantic
+        run: poetry add pydantic==${{ matrix.pydantic-version }}
       - name: Run Pytest
         run: poetry run pytest
 
@@ -69,11 +87,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Setup environment and install dependencies
-        uses: ./.github/actions/setup-environment
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-          pydantic-version: '2'
+          cache: poetry
+      - name: Install dependencies
+        run: poetry install
       - name: Set version in pyproject.toml
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}

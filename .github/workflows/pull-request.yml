@@ -11,11 +11,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Setup environment and install dependencies
-        uses: ./.github/actions/setup-environment
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-          pydantic-version: '2'
+          cache: poetry
+      - name: Install dependencies
+        run: poetry install
       - name: Run Flake8
         run: |
           output_file="flake8-output.txt"
@@ -31,11 +35,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Setup environment and install dependencies
-        uses: ./.github/actions/setup-environment
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-          pydantic-version: '2'
+          cache: poetry
+      - name: Install dependencies
+        run: poetry install
       - name: Run Pylint
         run: |
           output_file="pylint-output.txt"
@@ -56,11 +64,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Setup environment and install dependencies
-        uses: ./.github/actions/setup-environment
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-          pydantic-version: ${{ matrix.pydantic-version }}
+          cache: poetry
+      - name: Install dependencies
+        run: poetry install
+      - name: Install Pydantic
+        run: poetry add pydantic==${{ matrix.pydantic-version }}
       - name: Build coverage file
         run: |
           poetry run pytest --junitxml=pytest.xml --cov=src/declarativex tests/ | tee pytest-coverage.txt
@@ -76,11 +90,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Setup environment and install dependencies
-        uses: ./.github/actions/setup-environment
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-          pydantic-version: '2'
+          cache: poetry
+      - name: Install dependencies
+        run: poetry install
       - name: Run mypy
         run: |
           output_file="mypy-output.txt"
