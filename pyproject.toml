@@ -4,9 +4,35 @@ version = "1.0.0"
 description = "Declarative HTTP client for Python"
 authors = ["Vladyslav Halatskyi <xfloydya@gmail.com>"]
 readme = "README.md"
+license = "MIT"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Operating System :: OS Independent",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.urls]
+Homepage = 'https://github.com/floydya/declarativex'
+Documentation = 'https://declarativex.readthedocs.io/'
+Funding = 'https://ko-fi.com/floydya'
+Source = 'https://github.com/floydya/declarativex'
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<4.0"
+python = ">=3.8.1,<4"
 httpx = "^0.24.1"
 pydantic = ">1,<3"
 
@@ -19,6 +45,7 @@ coverage = "^7.3.0"
 pytest-cov = "^4.1.0"
 mypy = "^1.5.1"
 types-setuptools = "^68.1.0.1"
+mkdocs-material = "^9.2.8"
 
 [build-system]
 requires = ["poetry-core"]

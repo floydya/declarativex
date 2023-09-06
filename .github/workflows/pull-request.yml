@@ -58,7 +58,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
-        poetry-version: ["1", "2"]
+        pydantic-version: ["1", "2"]
       fail-fast: false
 
     steps:
@@ -73,12 +73,14 @@ jobs:
           cache: poetry
       - name: Install dependencies
         run: poetry install
+      - name: Install Pydantic
+        run: poetry add pydantic==${{ matrix.pydantic-version }}
       - name: Build coverage file
         run: |
           poetry run pytest --junitxml=pytest.xml --cov=src/declarativex tests/ | tee pytest-coverage.txt
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
-        if: matrix.python-version == '3.11' && matrix.poetry-version == '2'
+        if: matrix.python-version == '3.11' && matrix.pydantic-version == '2'
         with:
           pytest-coverage-path: pytest-coverage.txt
           junitxml-path: pytest.xml
