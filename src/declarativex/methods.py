@@ -1,23 +1,27 @@
 import asyncio
 import inspect
+import warnings
 from functools import wraps
 from typing import (
     Any,
-    Awaitable,
     Callable,
     Dict,
-    Generic,
+    List,
     Optional,
     Protocol,
     Tuple,
+    Type,
     TypeVar,
     Union,
+    get_type_hints,
 )
+
+import httpx
 from httpx import AsyncClient, Client, ReadTimeout
 
 from . import BaseClient
+from .compatibility import parse_obj_as
 from .request import Request
-from .response import Response, process_response
 
 ReturnType = TypeVar("ReturnType")
 SUPPORTED_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE"}
@@ -29,7 +33,7 @@ class BaseClientProtocol(Protocol):
     headers: Optional[Dict[str, str]]
 
 
-class RequestExecutor(Generic[ReturnType]):
+class RequestExecutor:
     method: str
     path: str
     timeout: Optional[int]
@@ -66,9 +70,7 @@ class RequestExecutor(Generic[ReturnType]):
             cls_instance = self_ or cls_
         return cls_instance, kwargs
 
-    def build_request(
-        self, func: Callable[..., ReturnType], *args, **kwargs
-    ) -> Request:
+    def build_request(self, func, *args, **kwargs) -> Request:
         cls_instance, kwargs = self.update_kwargs_with_args(
             func, *args, **kwargs
         )
@@ -91,14 +93,35 @@ class RequestExecutor(Generic[ReturnType]):
             **kwargs,
         )
 
+    @staticmethod
+    def _is_list_of_objects(return_type: Type) -> bool:
+        if (
+            hasattr(return_type, "_name")
+            and return_type._name == "List"  # pylint: disable=protected-access
+        ):
+            return True
+        return False
+
+    @classmethod
+    def process_response(cls, func, response: httpx.Response):
+        raw_response = response.json()
+        return_type = get_type_hints(func).get("return", Dict)
+        is_list = cls._is_list_of_objects(return_type)
+        if isinstance(raw_response, list) and not is_list:
+            return_type = List[return_type]  # type: ignore[valid-type]
+            warnings.warn(
+                "Provide a correct return type for "
+                "your method, response is a list"
+            )
+        return parse_obj_as(return_type, raw_response)
+
     async def execute_async(
         self,
-        func: Callable[..., ReturnType],
+        func,
         *args: Any,
         **kwargs: Any,
-    ) -> Response[ReturnType]:
+    ):
         request = self.build_request(func, *args, **kwargs)
-
         try:
             async with AsyncClient(timeout=self.timeout) as client:
                 response = await client.request(
@@ -111,15 +134,14 @@ class RequestExecutor(Generic[ReturnType]):
             raise TimeoutError(
                 f"Request timed out after {self.timeout} seconds"
             )
-
-        return process_response(response, request, func)
+        return self.process_response(func=func, response=response)
 
     def execute_sync(
         self,
-        func: Callable[..., ReturnType],
+        func,
         *args: Any,
         **kwargs: Any,
-    ) -> Response[ReturnType]:
+    ):
         request = self.build_request(func, *args, **kwargs)
         try:
             with Client(timeout=self.timeout) as client:
@@ -133,8 +155,7 @@ class RequestExecutor(Generic[ReturnType]):
             raise TimeoutError(
                 f"Request timed out after {self.timeout} seconds"
             )
-
-        return process_response(response, request, func)
+        return self.process_response(func=func, response=response)
 
 
 def declare(
@@ -144,7 +165,7 @@ def declare(
     base_url: str = "",
     default_query_params: Optional[Dict[str, Any]] = None,
     default_headers: Optional[Dict[str, str]] = None,
-):
+) -> Callable[..., ReturnType]:
     method = method.upper()
     if method not in SUPPORTED_METHODS:
         raise ValueError(
@@ -161,15 +182,23 @@ def declare(
         default_headers=default_headers,
     )
 
-    def wrapper(func: Callable[..., Union[ReturnType, Awaitable[ReturnType]]]):
+    def wrapper(func):
+        func_return_type = get_type_hints(func).get("return")
+        if not func_return_type:
+            warnings.warn(
+                "You must specify return type for your method. "
+                "Example: def get_data() -> dict: ..."
+            )
+
+        func.__annotations__["return"] = func_return_type
+
         @wraps(func)
-        def inner(
-            *args: Any, **kwargs: Any
-        ) -> Union[Response[ReturnType], Awaitable[Response[ReturnType]]]:
+        def inner(*args: Any, **kwargs: Any):
             if asyncio.iscoroutinefunction(func):
                 return executor.execute_async(func, *args, **kwargs)
             return executor.execute_sync(func, *args, **kwargs)
 
+        inner.__annotations__["return"] = func_return_type
         return inner
 
     return wrapper

@@ -19,26 +19,23 @@ class TestAsyncTodoClient:
     @pytest.mark.asyncio
     async def test_get_todo_by_id_raw(self):
         todo = await self.client.get_todo_by_id_raw(id=1)
-        assert todo.status_code == 200
-        assert isinstance(todo.data, dict)
-        assert todo.data["id"] == 1
+        assert isinstance(todo, dict)
+        assert todo["id"] == 1
 
     @pytest.mark.asyncio
     async def test_get_todo_by_id_pydantic(self):
         todo = await self.client.get_todo_by_id_pydantic(id=1)
-        assert todo.status_code == 200
-        assert isinstance(todo.data, Todo)
-        assert todo.data.id == 1
-        assert todo.data.title == "delectus aut autem"
-        assert todo.data.completed is False
-        assert todo.data.userId == 1
+        assert isinstance(todo, Todo)
+        assert todo.id == 1
+        assert todo.title == "delectus aut autem"
+        assert todo.completed is False
+        assert todo.userId == 1
 
     @pytest.mark.asyncio
     async def test_get_comments_raw(self):
         comments = await self.client.get_comments_raw()
-        assert comments.status_code == 200
-        assert isinstance(comments.data, list)
-        assert len(comments.data) == 500
+        assert isinstance(comments, list)
+        assert len(comments) == 500
 
     @pytest.mark.asyncio
     async def test_get_comments_value_error_path(self):
@@ -52,10 +49,9 @@ class TestAsyncTodoClient:
     @pytest.mark.asyncio
     async def test_get_comments_pydantic(self):
         comments = await self.client.get_comments_pydantic(postId=1)
-        assert comments.status_code == 200
-        assert isinstance(comments.data, list)
-        assert len(comments.data) == 5
-        assert all(isinstance(comment, Comment) for comment in comments.data)
+        assert isinstance(comments, list)
+        assert len(comments) == 500
+        assert all(isinstance(comment, Comment) for comment in comments)
 
     @pytest.mark.asyncio
     async def test_create_post(self):
@@ -64,9 +60,8 @@ class TestAsyncTodoClient:
             body="bar",
             userId=1,
         )
-        assert created_post.status_code == 201
-        assert isinstance(created_post.data, dict)
-        assert created_post.data["id"] == 101
+        assert isinstance(created_post, dict)
+        assert created_post["id"] == 101
 
     @pytest.mark.asyncio
     async def test_create_post_pydantic(self):
@@ -77,9 +72,8 @@ class TestAsyncTodoClient:
                 completed=False,
             )
         )
-        assert created_post.status_code == 201
-        assert isinstance(created_post.data, dict)
-        assert created_post.data["id"] == 101
+        assert isinstance(created_post, dict)
+        assert created_post["id"] == 101
 
     @pytest.mark.asyncio
     async def test_update_post_mixed(self):
@@ -91,9 +85,8 @@ class TestAsyncTodoClient:
             },
             user_id=1,
         )
-        assert created_post.status_code == 200
-        assert isinstance(created_post.data, dict)
-        assert created_post.data["id"] == 1
+        assert isinstance(created_post, dict)
+        assert created_post["id"] == 1
 
     @pytest.mark.asyncio
     async def test_update_post(self):
@@ -104,16 +97,14 @@ class TestAsyncTodoClient:
                 "completed": False,
             },
         )
-        assert updated_post.status_code == 200
-        assert isinstance(updated_post.data, dict)
-        assert updated_post.data["id"] == 1
+        assert isinstance(updated_post, dict)
+        assert updated_post["id"] == 1
 
     @pytest.mark.asyncio
     async def test_delete_post(self):
         deleted_post = await self.client.delete_post(post_id=1)
-        assert deleted_post.status_code == 200
-        assert isinstance(deleted_post.data, dict)
-        assert deleted_post.data == {}
+        assert isinstance(deleted_post, dict)
+        assert deleted_post == {}
 
 
 class TestSlowClient:
@@ -125,8 +116,7 @@ class TestSlowClient:
         response = self.client.get_data_from_slow_endpoint(
             delay=0, query_delay=0
         )
-        assert response.status_code == 200
-        assert response.data["args"]["query_delay"] == "0"
+        assert response["args"]["query_delay"] == "0"
 
     def test_sync_get_data_from_slow_endpoint_timeout(self):
         with pytest.raises(TimeoutError) as err:
@@ -138,8 +128,7 @@ class TestSlowClient:
         response = await self.client.async_get_data_from_slow_endpoint(
             delay=0, query_delay=0
         )
-        assert response.status_code == 200
-        assert response.data["args"]["delay"] == "0"
+        assert response["args"]["delay"] == "0"
 
     @pytest.mark.asyncio
     async def test_async_get_data_from_slow_endpoint_timeout(self):
@@ -152,15 +141,13 @@ class TestMethodClient:
     @pytest.mark.asyncio
     async def test_get_todo_by_id_raw(self):
         response = await get_todo_by_id_raw(id=1)
-        assert response.status_code == 200
-        assert isinstance(response.data, dict)
-        assert response.data["id"] == 1
+        assert isinstance(response, dict)
+        assert response["id"] == 1
 
     def test_sync_get_todo_by_id_raw(self):
         response = sync_get_todo_by_id_raw(1)
-        assert response.status_code == 200
-        assert isinstance(response.data, Todo)
-        assert response.data.id == 1
+        assert isinstance(response, Todo)
+        assert response.id == 1
 
     @pytest.mark.asyncio
     async def test_wrong_method(self):
@@ -171,7 +158,7 @@ class TestMethodClient:
                 "/todos/{id}",
                 base_url="https://jsonplaceholder.typicode.com",
             )
-            async def test_method(id: int):
+            async def test_method(id: int):  # pragma: no cover
                 ...
 
         assert str(err.value) == (
@@ -189,18 +176,23 @@ class TestBaseClient:
             _ = Client()
         assert str(err.value) == "base_url is required"
 
-    @pytest.mark.parametrize(
-        "field",
-        [BodyField(...), Json(...)]
-    )
+    @pytest.mark.parametrize("field", [BodyField(...), Json(...)])
     def test_get_with_bodyfield_parameter(self, field):
-        @declare(
-            "GET",
-            "/todos/{id}",
-            base_url="https://jsonplaceholder.typicode.com",
-        )
-        def test_method(id: int, body: str = field):
-            ...
+        with pytest.warns(
+            Warning,
+            match=(
+                r"You must specify return type for your method\. "
+                r"Example: def get_data\(\) \-\> dict\: \.\.\."
+            ),
+        ):
+
+            @declare(
+                "GET",
+                "/todos/{id}",
+                base_url="https://jsonplaceholder.typicode.com",
+            )
+            def test_method(id: int, body: str = field):
+                ...  # pragma: no cover
 
         with pytest.raises(ValueError) as err:
             test_method(1)
@@ -208,3 +200,23 @@ class TestBaseClient:
             f"{field.__class__.__name__} field is not "
             "supported for GET requests"
         )
+
+    def test_get_with_invalid_return_type(self):
+        @declare(
+            "GET",
+            "/todos",
+            base_url="https://jsonplaceholder.typicode.com",
+        )
+        def test_method() -> Todo:
+            ...  # pragma: no cover
+
+        with pytest.warns(
+            Warning,
+            match=(
+                "Provide a correct return type for "
+                "your method, response is a list"
+            ),
+        ):
+            data = test_method()
+
+        assert isinstance(data, list)

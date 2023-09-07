@@ -11,11 +11,11 @@ The `declare` decorator is the core of DeclarativeX. It's used to declare client
 
 ```python
 @declare(method, path, base_url, timeout, default_headers, default_query_params)
-def method_name():
+def method_name() -> dict:
     ...
 ```
 
-### Parameters
+### Declare parameters
 
 This table outlines the arguments you can pass to the decorator, detailing their type, 
 whether they're required or optional, and what each argument is for.
@@ -46,14 +46,13 @@ The priority of the parameters is as follows:
 
 ### Return Type
 
-The `declare` decorator returns a `requests.Response` object. Type annotations are also supported.
-
-You can use any of the custom dataclasses or Pydantic models to parse the response automatically.
+You can use any of the custom dataclasses, Pydantic models or built-in types to parse the response automatically.
 
 !!! warning "-> dict"
-    Don't place the return type `dict`. 
+    If you don't specify a return type, the decorator will return a `dict` object.
+    But, your IDE will not be able to detect the type of the response, so it's recommended to specify the return type.
+    Corresponding warning will be shown at the runtime.
 
-    The reason to not use `dict` is that it will be the same as the default return type, so it's redundant and will break IDE.
 
 ### Example
 
@@ -69,11 +68,14 @@ from declarativex import declare
     default_query_params={"api_key": "123456"},
     default_headers={"X-Trace": "<hash>"}
 )
-def get_user(user_id: int):
+def get_user(user_id: int) -> dict:
     ...
 
 ```
 
 ## Class-based declaration
+
+Class-based declaration is the most common way to declare clients. It's also the most flexible one.
+
 
 ## Function-based declaration

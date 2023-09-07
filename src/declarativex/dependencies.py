@@ -2,6 +2,8 @@ from typing import Any, Optional, TypeVar
 
 from pydantic import BaseModel
 
+from .compatibility import to_dict
+
 
 class BaseParam:
     """
@@ -12,6 +14,7 @@ class BaseParam:
         field_name (str | None):
             Name of the field to replace the keyword argument.
     """
+
     def __init__(
         self, default: Any = None, field_name: Optional[str] = None
     ) -> None:
@@ -38,10 +41,8 @@ class BodyField(BaseParam):
 
 
 class Json(BaseParam):
-
     @staticmethod
     def parse(value: Any) -> Any:
-        from .compatibility import to_dict
         return to_dict(value) if isinstance(value, BaseModel) else value
 
 

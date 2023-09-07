@@ -1,9 +1,17 @@
+import dataclasses
 import inspect
 from string import Formatter
-from typing import Any, Callable, Dict, Iterator, List
+from typing import Any, Callable, Dict, Generic, Iterator, List
 
-from .compatibility import Field
-from .dependencies import BaseParam, Path, Query
+from .dependencies import BaseParam, Path, Query, ParamType
+
+
+@dataclasses.dataclass
+class Field(Generic[ParamType]):
+    location: ParamType
+    type: Any
+    value: Any
+    name: str
 
 
 def extract_variables_from_url(template: str) -> List[str]:
