@@ -44,14 +44,14 @@ def pydantic_mock() -> mock.MagicMock:
 
 @pytest.fixture(scope="session")
 def pydantic_version_2() -> str:
-    with mock.patch("pydantic.__version__", "2.0.0"):
+    with mock.patch("pydantic.version.VERSION", "2.0.0"):
         importlib.reload(src.declarativex.compatibility)
         yield
 
 
 @pytest.fixture(scope="session")
 def pydantic_version_1() -> str:
-    with mock.patch("pydantic.__version__", "1.0.0"):
+    with mock.patch("pydantic.version.VERSION", "1.0.0"):
         importlib.reload(src.declarativex.compatibility)
         yield
 
