@@ -1,4 +1,10 @@
-# DeclarativeX
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/declarativex?style=for-the-badge&logo=python&logoColor=FF0077&color=FFD43B)
+![PyPI - Downloads](https://img.shields.io/pypi/dw/declarativex?style=for-the-badge&link=https%3A%2F%2Fpypi.org%2Fproject%2Fdeclarativex&color=FFD43B&logoColor=FF0077&logo=ownCloud)
+![PyPI - Version](https://img.shields.io/pypi/v/declarativex?style=for-the-badge&logo=pypi&color=FFD43B&logoColor=FF0077)
+![Coverage](https://img.shields.io/badge/COVERAGE-100%25-FFD43B?style=for-the-badge&logo=codecov)
+
+
+# DeclarativeX - Declarative HTTP Client
 
 ## Why DeclarativeX? 🤔
 
