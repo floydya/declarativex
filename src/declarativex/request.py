@@ -58,7 +58,7 @@ class Request:
             method=method,
             url=f"{url}?{query_params}" if query_params else url,
             query=query_params,
-            data=data | body,
+            data=data.update(body),
             headers=default_headers or {},
             content_type="application/json",
         )
