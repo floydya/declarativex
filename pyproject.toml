@@ -27,7 +27,7 @@ classifiers = [
 
 [project.urls]
 Homepage = 'https://github.com/floydya/declarativex'
-Documentation = 'https://declarativex.readthedocs.io/'
+Documentation = 'https://floydya.github.io/declarativex'
 Funding = 'https://ko-fi.com/floydya'
 Source = 'https://github.com/floydya/declarativex'
 
@@ -50,3 +50,8 @@ mkdocs-material = "^9.2.8"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::pydantic.PydanticDeprecatedSince20",
+]

@@ -1,4 +1,6 @@
-from typing import Any, Optional
+from typing import Any, Optional, TypeVar
+
+from pydantic import BaseModel
 
 
 class BaseParam:
@@ -18,6 +20,10 @@ class BaseParam:
         self.default = default
         self.field_name = field_name
 
+    @staticmethod
+    def parse(value: Any) -> Any:
+        return value
+
 
 class Path(BaseParam):
     ...
@@ -32,7 +38,14 @@ class BodyField(BaseParam):
 
 
 class Json(BaseParam):
-    ...
+
+    @staticmethod
+    def parse(value: Any) -> Any:
+        from .compatibility import to_dict
+        return to_dict(value) if isinstance(value, BaseModel) else value
 
 
-__all__ = ["BaseParam", "Path", "Query", "BodyField", "Json"]
+ParamType = TypeVar("ParamType", bound=BaseParam)
+
+
+__all__ = ["BaseParam", "Path", "Query", "BodyField", "Json", "ParamType"]

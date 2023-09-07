@@ -1,0 +1,24 @@
+.md-grid {
+    max-width: 1680px;
+}
+
+
+:root {
+    --md-primary-fg-color: #ED6673;
+    --md-primary-fg-color--light: #f4a3ab;
+    --md-primary-fg-color--dark: #8e3d45;
+
+    --md-default-bg-color: #2F3556;
+
+
+    --md-primary-fg-color: #ED6673;
+    --md-primary-fg-color--light: #f4a3ab;
+    --md-primary-fg-color--dark: #8e3d45;
+    --md-primary-bg-color: #2F3556;
+    --md-primary-bg-color--light: #2F3556B3;
+
+    --md-accent-fg-color: #F9C846;
+    --md-accent-fg-color--transparent: #F9C8461A;
+    --md-accent-bg-color: #2F3556;
+    --md-accent-bg-color--light: #2F3556B3;
+}

@@ -1,8 +1,11 @@
 import warnings
-from typing import Any, Type, TypeVar
+from typing import Any, Generic, Type, TypeVar
 
 import pydantic
 from pydantic import BaseModel
+
+from .dependencies import ParamType
+
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=DeprecationWarning)
@@ -10,6 +13,7 @@ with warnings.catch_warnings():
 
 
 M = TypeVar("M", bound=BaseModel)
+T = TypeVar("T")
 pydantic_version = parse_version(pydantic.__version__)
 
 if pydantic_version >= parse_version("2.0.0"):
@@ -23,6 +27,17 @@ if pydantic_version >= parse_version("2.0.0"):
     def to_dict(pydantic_obj: M, **kwargs) -> dict:
         return pydantic_obj.model_dump(**kwargs)
 
+    def parse_obj_as(type_: Type[T], obj: Any) -> T:
+        return pydantic.TypeAdapter(type_).validate_python(obj)
+
+    class Field(Generic[ParamType], BaseModel):
+        location: ParamType
+        type: Any
+        value: Any
+        name: str
+
+        model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+
 else:
 
     def parse_obj(pydantic_model: Type[M], obj: Any) -> M:
@@ -33,3 +48,15 @@ else:
 
     def to_dict(pydantic_obj: M, **kwargs) -> dict:
         return pydantic_obj.dict(**kwargs)
+
+    def parse_obj_as(type_: Type[T], obj: Any) -> T:
+        return pydantic.parse_obj_as(type_, obj)
+
+    class Field(Generic[ParamType], BaseModel):  # type: ignore[no-redef]
+        location: ParamType
+        type: Any
+        value: Any
+        name: str
+
+        class Config:
+            arbitrary_types_allowed = True

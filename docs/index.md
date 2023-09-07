@@ -21,25 +21,25 @@ And boom! You're good to go.
 Ready to dive in? Here's a quick example to get you started:
 
 ```{.python title="my_client.py"}
-from declarativex import BaseClient, get
+from declarativex import BaseClient, declare
 
 
-class MyClient(BaseClient):
-    @get("/users/{user_id}")
-    def get_user(self, user_id: int):
-        pass
+@declare("GET", "/users/{user_id}", "https://example.com")
+def get_user(user_id: int):
+    ...
 
 
-client = MyClient(base_url="https://api.example.com")
-response = client.get_user(user_id=1)
-print(response.json())
+response = get_user(user_id=1)
+print(response.data)
+print(response.status_code)
 ```
 ???+ success "You should see the following output:"
-    ```json
+    ```
     {
       "id": 1,
       "name": "John Doe"
     }
+    200
     ```
 
 See? No fuss, just clean and straightforward code.
@@ -55,7 +55,7 @@ See? No fuss, just clean and straightforward code.
 Feel free to explore the documentation to get a deeper understanding of DeclarativeX. Whether you're looking to understand the core concepts, decorators, or how to set up parameters, we've got you covered.
 
 - [BaseClient](Core_Concepts/BaseClient.md)
-- [Decorators](Core_Concepts/Decorators.md)
+- [Declaration](Core_Concepts/Declaration.md)
 - [Parameters](Core_Concepts/Parameters.md)
 
 ## Contributing
