@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from src.declarativex import (
     BaseClient,
@@ -26,19 +26,19 @@ class TodoClient(BaseClient):
     @declare("GET", "/comments")
     async def get_comments_raw(
         self, post_id: int = Query(field_name="postId")
-    ) -> list[dict]:
+    ) -> List[dict]:
         ...  # pragma: no cover
 
     @declare("GET", "/posts/{postId}/comments")
     async def get_comments_value_error_path(
         self, post_id: Optional[int] = Path(field_name="postId")
-    ) -> list[Comment]:
+    ) -> List[Comment]:
         ...  # pragma: no cover
 
     @declare("GET", "/comments")
     async def get_comments_pydantic(
         self, postId: Optional[int] = 1
-    ) -> list[Comment]:
+    ) -> List[Comment]:
         ...  # pragma: no cover
 
     @declare("POST", "/posts")
