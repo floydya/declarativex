@@ -51,7 +51,3 @@ mkdocs-material = "^9.2.8"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.pytest.ini_options]
-filterwarnings = [
-    "ignore::pydantic.PydanticDeprecatedSince20",
-]

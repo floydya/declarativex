@@ -1,6 +1,6 @@
 import dataclasses
 import importlib
-from typing import Any
+from typing import Any, Union
 from unittest import mock
 
 import pytest
@@ -14,7 +14,9 @@ class MockBaseModel:
         return cls()
 
     @classmethod
-    def model_validate_json(cls, json_data: str | bytes) -> "MockBaseModel":
+    def model_validate_json(
+        cls, json_data: Union[str, bytes]
+    ) -> "MockBaseModel":
         return cls()
 
     def model_dump(self, **kwargs: Any) -> dict:
@@ -25,7 +27,7 @@ class MockBaseModel:
         return cls()
 
     @classmethod
-    def parse_raw(cls, b: str | bytes) -> "MockBaseModel":
+    def parse_raw(cls, b: Union[str, bytes]) -> "MockBaseModel":
         return cls()
 
     def dict(self, **kwargs: Any) -> dict:
@@ -80,7 +82,6 @@ def test_to_dict_for_version_2() -> None:
 
 @pytest.mark.usefixtures("pydantic_mock", "pydantic_version_2")
 def test_parse_obj_as_version_2() -> None:
-
     @dataclasses.dataclass
     class Data:
         test: str
@@ -117,7 +118,6 @@ def test_to_dict_for_version_1() -> None:
 
 @pytest.mark.usefixtures("pydantic_mock", "pydantic_version_1")
 def test_parse_obj_as_version_1() -> None:
-
     @dataclasses.dataclass
     class Data:
         test: str
