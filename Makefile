@@ -1,6 +1,9 @@
-.PHONY: test flake8 pylint mypy pytest
+.PHONY: test black flake8 pylint mypy pytest
 
-test: flake8 pylint mypy pytest
+test: black flake8 pylint mypy pytest
+
+black:
+	black .
 
 flake8:
 	flake8 .

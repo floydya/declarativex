@@ -11,27 +11,27 @@ import src.declarativex.compatibility
 class MockBaseModel:
     @classmethod
     def model_validate(cls, obj: dict) -> "MockBaseModel":
-        return cls()
+        return cls()  # pragma: no cover
 
     @classmethod
     def model_validate_json(
         cls, json_data: Union[str, bytes]
     ) -> "MockBaseModel":
-        return cls()
+        return cls()  # pragma: no cover
 
     def model_dump(self, **kwargs: Any) -> dict:
-        return {"mock": "data"}
+        return {"mock": "data"}  # pragma: no cover
 
     @classmethod
     def parse_obj(cls, obj: dict) -> "MockBaseModel":
-        return cls()
+        return cls()  # pragma: no cover
 
     @classmethod
     def parse_raw(cls, b: Union[str, bytes]) -> "MockBaseModel":
-        return cls()
+        return cls()  # pragma: no cover
 
     def dict(self, **kwargs: Any) -> dict:
-        return {"mock": "data"}
+        return {"mock": "data"}  # pragma: no cover
 
 
 @pytest.fixture(scope="module")

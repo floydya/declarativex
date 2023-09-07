@@ -1,10 +1,8 @@
 import warnings
-from typing import Any, Generic, Type, TypeVar, Union
+from typing import Any, Type, TypeVar, Union
 
 import pydantic
 from pydantic import BaseModel
-
-from .dependencies import ParamType
 
 
 M = TypeVar("M", bound=BaseModel)
@@ -33,16 +31,3 @@ def parse_obj_as(type_: Type[T], obj: Any) -> T:
     with warnings.catch_warnings():  # pragma: no cover
         warnings.simplefilter("ignore", category=DeprecationWarning)
         return pydantic.parse_obj_as(type_, obj)
-
-
-with warnings.catch_warnings():  # pragma: no cover
-    warnings.simplefilter("ignore", category=DeprecationWarning)
-
-    class Field(Generic[ParamType], BaseModel):
-        location: ParamType
-        type: Any
-        value: Any
-        name: str
-
-        class Config:
-            arbitrary_types_allowed = True

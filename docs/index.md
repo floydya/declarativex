@@ -25,13 +25,12 @@ from declarativex import BaseClient, declare
 
 
 @declare("GET", "/users/{user_id}", "https://example.com")
-def get_user(user_id: int):
+def get_user(user_id: int) -> dict:
     ...
 
 
 response = get_user(user_id=1)
-print(response.data)
-print(response.status_code)
+print(response)
 ```
 ???+ success "You should see the following output:"
     ```
@@ -39,7 +38,6 @@ print(response.status_code)
       "id": 1,
       "name": "John Doe"
     }
-    200
     ```
 
 See? No fuss, just clean and straightforward code.
