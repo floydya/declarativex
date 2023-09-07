@@ -7,15 +7,28 @@ from pydantic import BaseModel
 from .dependencies import ParamType
 
 
-with warnings.catch_warnings():
+with warnings.catch_warnings():  # pragma: no cover
     warnings.simplefilter("ignore", category=DeprecationWarning)
     from pkg_resources import parse_version
+    from packaging.version import Version
+    from distutils.version import StrictVersion
+
+    try:
+        pydantic_ver = pydantic.version.__version__
+    except AttributeError:
+        pydantic_ver = pydantic.version.VERSION
+
+    if isinstance(pydantic_ver, StrictVersion):
+        pydantic_version = ".".join(pydantic_ver.version)
+    elif isinstance(pydantic_ver, Version):
+        pydantic_version = pydantic_ver.base_version
+
+    pydantic_version = parse_version(pydantic.version.VERSION)
 
 
 M = TypeVar("M", bound=BaseModel)
 T = TypeVar("T")
 
-pydantic_version = parse_version(pydantic.version.VERSION)
 
 
 def parse_obj(pydantic_model: Type[M], obj: Any) -> M:
