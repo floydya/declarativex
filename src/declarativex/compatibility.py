@@ -1,5 +1,5 @@
 import warnings
-from typing import Any, Generic, Type, TypeVar
+from typing import Any, Generic, Type, TypeVar, Union
 
 import pydantic
 from pydantic import BaseModel
@@ -21,7 +21,7 @@ if pydantic_version >= parse_version("2.0.0"):
     def parse_obj(pydantic_model: Type[M], obj: Any) -> M:
         return pydantic_model.model_validate(obj=obj)
 
-    def parse_raw(pydantic_model: Type[M], json_data: str | bytes) -> M:
+    def parse_raw(pydantic_model: Type[M], json_data: Union[str, bytes]) -> M:
         return pydantic_model.model_validate_json(json_data=json_data)
 
     def to_dict(pydantic_obj: M, **kwargs) -> dict:
@@ -43,7 +43,7 @@ else:
     def parse_obj(pydantic_model: Type[M], obj: Any) -> M:
         return pydantic_model.parse_obj(obj=obj)
 
-    def parse_raw(pydantic_model: Type[M], json_data: str | bytes) -> M:
+    def parse_raw(pydantic_model: Type[M], json_data: Union[str, bytes]) -> M:
         return pydantic_model.parse_raw(b=json_data)
 
     def to_dict(pydantic_obj: M, **kwargs) -> dict:
