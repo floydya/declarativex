@@ -11,6 +11,9 @@ theme:
     accent: custom
   features:
     - content.code.copy
+    - navigation.instant
+    - navigation.instant.prefetch
+    - content.code.annotate
 
 extra:
   analytics:
@@ -20,12 +23,15 @@ extra:
 extra_css:
   - stylesheets/extra.css
 
+extra_javascript:
+  - javascripts/extra.js
+
 nav:
   - Home: index.md
   - Core Concepts:
     - BaseClient: Core_Concepts/BaseClient.md
     - Declaration: Core_Concepts/Declaration.md
-    # - Parameters: Core_Concepts/Parameters.md
+    - Parameters: Core_Concepts/Parameters.md
   - Compatibility: Compatibility.md
   - Testing: Testing.md
   # - Examples: Examples/Examples.md
@@ -42,16 +48,22 @@ plugins:
 
 markdown_extensions:
   - admonition
+  - abbr
   - attr_list
   - def_list
   - md_in_html
   - toc:
       permalink: true
       title: On this page
-  - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight
+  - pymdownx.inlinehilite
   - pymdownx.extra
+  - pymdownx.snippets
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.emoji:
