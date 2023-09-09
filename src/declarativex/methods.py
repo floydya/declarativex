@@ -1,5 +1,6 @@
 import asyncio
 import inspect
+import logging
 import warnings
 from functools import wraps
 from typing import (
@@ -14,13 +15,16 @@ from typing import (
     TypeVar,
     Union,
     get_type_hints,
+    cast,
 )
 
 import httpx
 from httpx import AsyncClient, Client, ReadTimeout
 
-from . import BaseClient
+from .client import BaseClient
 from .compatibility import parse_obj_as
+from .dependencies import BodyField, Json
+from .exceptions import MisconfiguredException
 from .request import Request
 
 ReturnType = TypeVar("ReturnType")
@@ -103,9 +107,15 @@ class RequestExecutor:
         return False
 
     @classmethod
-    def process_response(cls, func, response: httpx.Response):
+    def process_response(
+        cls, func: Callable[..., ReturnType], response: httpx.Response
+    ) -> ReturnType:
         raw_response = response.json()
-        return_type = get_type_hints(func).get("return", Dict)
+        return_type: type = cast(type, get_type_hints(func).get("return"))
+        return_type = (
+            Dict if return_type == type(None) else return_type  # noqa
+        )
+        logging.critical(return_type)
         is_list = cls._is_list_of_objects(return_type)
         if isinstance(raw_response, list) and not is_list:
             return_type = List[return_type]  # type: ignore[valid-type]
@@ -183,8 +193,19 @@ def declare(
     )
 
     def wrapper(func):
+        signature = inspect.signature(func)
+        any_body_or_json_field = any(
+            param.default
+            for param in signature.parameters.values()
+            if isinstance(param.default, (BodyField, Json))
+        )
+        if method == "GET" and any_body_or_json_field:
+            raise MisconfiguredException(
+                "BodyField and Json fields are not supported for GET requests"
+            )
+
         func_return_type = get_type_hints(func).get("return")
-        if not func_return_type:
+        if isinstance(func_return_type, type(None)):
             warnings.warn(
                 "You must specify return type for your method. "
                 "Example: def get_data() -> dict: ..."

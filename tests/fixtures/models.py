@@ -1,4 +1,13 @@
+import dataclasses
+
 from pydantic import BaseModel
+
+
+@dataclasses.dataclass
+class BaseTodoDataClass:
+    userId: int
+    title: str
+    completed: bool
 
 
 class BaseTodo(BaseModel):

@@ -77,3 +77,4 @@ cython_debug/
 .pypirc
 *.xml
 *.txt
+.idea/

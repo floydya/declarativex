@@ -1,63 +1,28 @@
-import dataclasses
 import inspect
 from string import Formatter
-from typing import Any, Callable, Dict, Generic, Iterator, List
+from typing import Callable, Iterator, List
 
-from .dependencies import BaseParam, Path, Query, ParamType
-
-
-@dataclasses.dataclass
-class Field(Generic[ParamType]):
-    location: ParamType
-    type: Any
-    value: Any
-    name: str
+from .dependencies import Dependency, Path, Query
 
 
 def extract_variables_from_url(template: str) -> List[str]:
     return [field[1] for field in Formatter().parse(template) if field[1]]
 
 
-def get_default_args(func: Callable, path: str, **values) -> Dict[str, Field]:
+def get_params(func: Callable, path: str, **values) -> Iterator[Dependency]:
     signature = inspect.signature(func)
     url_template_variables = extract_variables_from_url(path)
-    fields = {}
     for key, val in signature.parameters.items():
-        if val.default is not inspect.Parameter.empty and isinstance(
-            val.default, BaseParam
+        if key in ["self", "cls"]:
+            continue
+        if val.default is not inspect.Parameter.empty and issubclass(
+            val.default.__class__, Dependency
         ):
-            fields[key] = Field(
-                location=val.default,
-                type=func.__annotations__.get(key),
-                value=values.get(key),
-                name=val.default.field_name if val.default.field_name else key,
-            )
+            field = val.default
+        elif key in url_template_variables:
+            field = Path(...)
         else:
-            fields[key] = Field(
-                location=Path() if key in url_template_variables else Query(),
-                type=func.__annotations__.get(key),
-                value=values.get(key),
-                name=key,
-            )
-    return fields
-
-
-def get_params(
-    func: Callable[..., Any], path: str, **values: Any
-) -> Iterator[Field]:
-    for key, options in get_default_args(func, path, **values).items():
-        # Apply default value if parameter is optional and not provided
-        if options.value is None:
-            options.value = options.location.default
-
-        # Raise error if PATH parameter is required and not provided
-        if isinstance(options.location, Path):
-            if options.value is None:
-                raise ValueError(
-                    f"Parameter with {key=} is required and has no default"
-                )
-        # Skip if QUERY parameter is not provided and no default value
-        elif isinstance(options.location, Query):
-            if options.value is None:
-                continue
-        yield options
+            field = Query(...)
+        yield field.prepare(
+            key, func.__annotations__.get(key), values.get(key)
+        )

@@ -34,24 +34,15 @@ class Request:
         body = {}
         data = {}
 
-        for options in get_params(func, path, **values):
-            if isinstance(options.location, Path):
-                path_params[options.name] = Path.parse(options.value)
-            elif isinstance(options.location, Query):
-                query[options.name] = Query.parse(options.value)
-            elif isinstance(options.location, BodyField):
-                if method == "GET":
-                    raise ValueError(
-                        "BodyField field is not supported for GET requests"
-                    )
-                body[options.name] = BodyField.parse(options.value)
-            elif isinstance(options.location, Json):
-                if method == "GET":
-                    raise ValueError(
-                        "Json field is not supported for GET requests"
-                    )
-                data = Json.parse(options.value)
-
+        for dependency in get_params(func, path, **values):
+            if isinstance(dependency, Path):
+                path_params[dependency.field_name] = dependency.value
+            elif isinstance(dependency, Query):
+                query[dependency.field_name] = dependency.value
+            elif isinstance(dependency, BodyField):
+                body[dependency.field_name] = dependency.value
+            elif isinstance(dependency, Json):
+                data = dependency.value
         url = url.format(**path_params)
         query_params = urlencode(query, doseq=True)
         return cls(

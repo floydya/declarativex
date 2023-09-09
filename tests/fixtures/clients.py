@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from src.declarativex import (
     BaseClient,
@@ -8,8 +8,7 @@ from src.declarativex import (
     BodyField,
     Json,
 )
-
-from tests.fixtures.models import BaseTodo, Comment, Todo
+from tests.fixtures.models import BaseTodo, Comment, Todo, BaseTodoDataClass
 
 
 class TodoClient(BaseClient):
@@ -35,12 +34,6 @@ class TodoClient(BaseClient):
     ) -> List[Comment]:
         ...  # pragma: no cover
 
-    @declare("GET", "/posts/{postId}/comments")
-    async def get_comments_value_error_path(
-        self, post_id: Optional[int] = Path(field_name="postId")
-    ) -> List[Comment]:
-        ...  # pragma: no cover
-
     @declare("POST", "/posts")
     async def create_post(
         self,
@@ -60,9 +53,37 @@ class TodoClient(BaseClient):
         ...  # pragma: no cover
 
     @declare("POST", "/posts")
+    async def misconfigured_create_post(
+        self,
+        body: Union[BaseTodo, dict] = Json(...),
+    ) -> dict:
+        ...  # pragma: no cover
+
+    @declare("POST", "/posts")
+    async def misconfigured_create_post_without_default(
+        self,
+        body: BaseTodo = Json(...),
+    ) -> dict:
+        ...  # pragma: no cover
+
+    @declare("POST", "/posts")
+    async def misconfigured_create_post_but_with_default(
+        self,
+        body: Union[BaseTodo, dict, None] = Json(default={"data": "test"}),
+    ) -> dict:
+        ...  # pragma: no cover
+
+    @declare("POST", "/posts")
     async def create_post_pydantic(
         self,
         body: BaseTodo = Json(...),
+    ) -> dict:
+        ...  # pragma: no cover
+
+    @declare("POST", "/posts")
+    async def create_post_dataclass(
+        self,
+        body: BaseTodoDataClass = Json(...),
     ) -> dict:
         ...  # pragma: no cover
 
@@ -93,7 +114,7 @@ class SlowClient(BaseClient):
 
     @declare("GET", "/delay/{delay}", timeout=2)
     def get_data_from_slow_endpoint(
-        self, delay: int, query_delay: int
+        self, delay: int, query_delay: Optional[int]
     ) -> dict:
         ...  # pragma: no cover
 
@@ -101,7 +122,7 @@ class SlowClient(BaseClient):
     async def async_get_data_from_slow_endpoint(
         self,
         delay: int = Path(...),
-        query_delay: int = Query(field_name="delay"),
+        query_delay: Optional[int] = Query(field_name="delay"),
     ) -> dict:
         ...  # pragma: no cover
 

@@ -1,14 +1,18 @@
 import pytest
 
-from src.declarativex.methods import SUPPORTED_METHODS
 from src.declarativex import BaseClient, declare, BodyField, Json
+from src.declarativex.exceptions import (
+    MisconfiguredException,
+    DependencyValidationError,
+)
+from src.declarativex.methods import SUPPORTED_METHODS
 from tests.fixtures.clients import (
     SlowClient,
     TodoClient,
     get_todo_by_id_raw,
     sync_get_todo_by_id_raw,
 )
-from tests.fixtures.models import BaseTodo, Comment, Todo
+from tests.fixtures.models import Comment, Todo, BaseTodo, BaseTodoDataClass
 
 
 class TestAsyncTodoClient:
@@ -33,24 +37,19 @@ class TestAsyncTodoClient:
 
     @pytest.mark.asyncio
     async def test_get_comments_raw(self):
-        comments = await self.client.get_comments_raw()
-        assert isinstance(comments, list)
-        assert len(comments) == 500
+        with pytest.raises(DependencyValidationError) as err:
+            await self.client.get_comments_raw()
 
-    @pytest.mark.asyncio
-    async def test_get_comments_value_error_path(self):
-        with pytest.raises(ValueError) as err:
-            await self.client.get_comments_value_error_path()
-        assert (
-            str(err.value)
-            == "Parameter with key='post_id' is required and has no default"
+        assert str(err.value) == (
+            "Value of type NoneType is not supported. Expected type: int. "
+            "Specify a default value or use Optional[int] instead."
         )
 
     @pytest.mark.asyncio
     async def test_get_comments_pydantic(self):
-        comments = await self.client.get_comments_pydantic(postId=1)
+        comments = await self.client.get_comments_pydantic(post_id=1)
         assert isinstance(comments, list)
-        assert len(comments) == 500
+        assert len(comments) == 5
         assert all(isinstance(comment, Comment) for comment in comments)
 
     @pytest.mark.asyncio
@@ -58,7 +57,7 @@ class TestAsyncTodoClient:
         created_post = await self.client.create_post(
             title="foo",
             body="bar",
-            userId=1,
+            user_id=1,
         )
         assert isinstance(created_post, dict)
         assert created_post["id"] == 101
@@ -74,6 +73,75 @@ class TestAsyncTodoClient:
         )
         assert isinstance(created_post, dict)
         assert created_post["id"] == 101
+
+    @pytest.mark.asyncio
+    async def test_create_post_dataclass(self):
+        created_post = await self.client.create_post_dataclass(
+            body=BaseTodoDataClass(
+                userId=1,
+                title="foo",
+                completed=False,
+            )
+        )
+        assert isinstance(created_post, dict)
+        assert created_post["id"] == 101
+
+    @pytest.mark.asyncio
+    async def test_misconfigured_create_post(self):
+        with pytest.raises(DependencyValidationError) as err:
+            await self.client.misconfigured_create_post(body=None)
+
+        assert str(err.value) == (
+            "Value of type NoneType is not supported. "
+            "Expected one of: ['BaseTodo', 'dict']. "
+            "Specify a default value or use Optional"
+            "[typing.Union[tests.fixtures.models.BaseTodo, dict]] instead."
+        )
+
+    @pytest.mark.asyncio
+    async def test_misconfigured_create_post_without_default(self):
+        with pytest.raises(DependencyValidationError) as err:
+            await self.client.misconfigured_create_post_without_default(
+                body=None
+            )
+
+        assert str(err.value) == (
+            "Value of type NoneType is not supported. "
+            "Expected type: BaseTodo. "
+            "Specify a default value or use "
+            "Optional[BaseTodo] instead."
+        )
+
+    @pytest.mark.asyncio
+    async def test_misconfigured_create_post_without_default_str_val(self):
+        with pytest.raises(DependencyValidationError) as err:
+            await self.client.misconfigured_create_post_without_default(
+                body="test"
+            )
+
+        assert str(err.value) == (
+            "Value of type str is not supported. Expected type: BaseTodo."
+        )
+
+    @pytest.mark.asyncio
+    async def test_misconfigured_create_post_but_with_default(self):
+        created_post = (
+            await self.client.misconfigured_create_post_but_with_default()
+        )
+        assert isinstance(created_post, dict)
+        assert created_post == {"id": 101}
+
+    @pytest.mark.asyncio
+    async def test_misconfigured_create_post_invalid_type(self):
+        with pytest.raises(DependencyValidationError) as err:
+            await self.client.misconfigured_create_post_but_with_default(
+                body="test"
+            )
+
+        assert str(err.value) == (
+            "Value of type str is not supported. "
+            "Expected one of: ['BaseTodo', 'dict', 'NoneType']."
+        )
 
     @pytest.mark.asyncio
     async def test_update_post_mixed(self):
@@ -172,19 +240,13 @@ class TestBaseClient:
         class Client(BaseClient):
             pass
 
-        with pytest.raises(ValueError) as err:
+        with pytest.raises(MisconfiguredException) as err:
             _ = Client()
         assert str(err.value) == "base_url is required"
 
     @pytest.mark.parametrize("field", [BodyField(...), Json(...)])
     def test_get_with_bodyfield_parameter(self, field):
-        with pytest.warns(
-            Warning,
-            match=(
-                r"You must specify return type for your method\. "
-                r"Example: def get_data\(\) \-\> dict\: \.\.\."
-            ),
-        ):
+        with pytest.raises(MisconfiguredException) as err:
 
             @declare(
                 "GET",
@@ -194,11 +256,8 @@ class TestBaseClient:
             def test_method(id: int, body: str = field):
                 ...  # pragma: no cover
 
-        with pytest.raises(ValueError) as err:
-            test_method(1)
         assert str(err.value) == (
-            f"{field.__class__.__name__} field is not "
-            "supported for GET requests"
+            "BodyField and Json fields are not supported for GET requests"
         )
 
     def test_get_with_invalid_return_type(self):
@@ -220,3 +279,40 @@ class TestBaseClient:
             data = test_method()
 
         assert isinstance(data, list)
+
+    def test_get_with_no_return_type(self):
+        with pytest.warns(
+            Warning,
+            match=(
+                r"You must specify return type for your method\. "
+                r"Example\: def get_data\(\) \-\> dict\: \.\.\."
+            ),
+        ):
+
+            @declare(
+                "GET",
+                "/todos",
+                base_url="https://jsonplaceholder.typicode.com",
+            )
+            def test_method():
+                ...  # pragma: no cover
+
+    def test_get_with_no_argument_type(self):
+        @declare(
+            "GET",
+            "/todos/{id}",
+            base_url="https://jsonplaceholder.typicode.com",
+        )
+        def test_method(id):
+            ...  # pragma: no cover
+
+        with pytest.warns(
+            Warning,
+            match=(
+                r"Type hint for parameter with name\='id' is not specified\. "
+                r"This is not recommended as it may "
+                r"lead to unexpected behaviour\. "
+                r"Consider specifying a type hint for the parameter\."
+            ),
+        ):
+            test_method(1)

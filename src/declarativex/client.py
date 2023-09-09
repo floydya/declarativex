@@ -1,5 +1,7 @@
 from typing import Dict, Optional
 
+from .exceptions import MisconfiguredException
+
 
 class BaseClient:
     """
@@ -23,7 +25,7 @@ class BaseClient:
     ) -> None:
         self.base_url = base_url or self.base_url
         if not self.base_url:
-            raise ValueError("base_url is required")
+            raise MisconfiguredException("base_url is required")
         self.default_headers = default_headers or self.default_headers
         self.default_query_params = (
             default_query_params or self.default_query_params
