@@ -1,0 +1,35 @@
+from collections.abc import Iterable
+from typing import Type, Sequence, Union
+
+
+class DeclarativeException(Exception):
+    pass
+
+
+class MisconfiguredException(DeclarativeException):
+    pass
+
+
+class DependencyValidationError(DeclarativeException):
+    def __init__(
+        self, expected_type: Union[Type, Sequence[Type]], received_type: Type
+    ):
+        self._is_none = isinstance(None, received_type)
+        message = f"Value of type {received_type.__name__} is not supported. "
+        if isinstance(expected_type, Iterable):
+            message += (
+                f"Expected one of: {[arg.__name__ for arg in expected_type]}."
+            )
+        else:
+            message += f"Expected type: {expected_type.__name__}."
+        if self._is_none:
+            type_hint = (
+                Union[*expected_type]
+                if isinstance(expected_type, Iterable)
+                else expected_type.__name__
+            )
+            message += (
+                " Specify a default value or "
+                f"use Optional[{type_hint}] instead."
+            )
+        super().__init__(message)
