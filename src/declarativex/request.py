@@ -1,55 +1,80 @@
-import dataclasses
-from typing import Any, Callable, Dict, Optional
-from urllib.parse import urlencode
+from typing import Any, Callable, Dict, Optional, TypedDict, cast
 
-from .dependencies import BodyField, Json, Path, Query
+import httpx
+
+from .dependencies import (
+    JsonField,
+    Json,
+    Path,
+    Query,
+    Header,
+    Cookie,
+)
 from .helpers import get_params
 
 
-@dataclasses.dataclass
-class Request:
+class RequestDict(TypedDict):
     method: str
-    url: str
-    query: str
+    url: httpx.URL
+    params: Optional[Dict[str, Any]]
+    headers: httpx.Headers
+    cookies: Optional[httpx.Cookies]
+    json: Optional[Dict[str, Any]]
     data: Optional[Dict[str, Any]]
-    headers: Dict[str, str]
-    content_type: str
+    timeout: Optional[float]
 
-    @classmethod
-    def build_request(
-        cls,
-        func: Callable[..., Any],
-        method: str,
-        path: str,
-        base_url: str,
-        default_query_params: Optional[Dict[str, Any]] = None,
-        default_headers: Optional[Dict[str, str]] = None,
-        **values,
-    ) -> "Request":
-        query: Dict[str, Any] = default_query_params or {}
 
-        url = f"{base_url}{path}"
-        path_params = {}
+def build_request(
+    func: Callable[..., Any],
+    method: str,
+    path: str,
+    base_url: str,
+    timeout: Optional[float] = None,
+    default_query_params: Optional[Dict[str, Any]] = None,
+    default_headers: Optional[Dict[str, str]] = None,
+    **values,
+) -> RequestDict:
+    url: str = f"{base_url}{path}"
+    params: Dict[str, Any] = default_query_params or {}
+    _headers: Dict[str, Any] = default_headers or {}
+    path_params: Dict[str, str] = {}
+    json_fields: Dict[str, Any] = {}
+    json: Optional[Dict[str, Any]] = None
+    _cookies: Dict[str, Any] = {}
+    form_data: Optional[Dict[str, Any]] = None
 
-        body = {}
-        data = {}
-
-        for dependency in get_params(func, path, **values):
-            if isinstance(dependency, Path):
-                path_params[dependency.field_name] = dependency.value
+    for dependency in get_params(func, path, **values):
+        if isinstance(dependency, Path):
+            path_params[dependency.field_name] = cast(str, dependency.value)
+        elif isinstance(dependency, Json):
+            json = cast(dict, dependency.value)
+        elif dependency.value is not None:
+            value = cast(str, dependency.value)
+            if isinstance(dependency, JsonField):
+                json_fields[dependency.field_name] = value
+            elif isinstance(dependency, Header):
+                _headers[dependency.field_name] = value
+            elif isinstance(dependency, Cookie):
+                _cookies[dependency.field_name] = value
             elif isinstance(dependency, Query):
-                query[dependency.field_name] = dependency.value
-            elif isinstance(dependency, BodyField):
-                body[dependency.field_name] = dependency.value
-            elif isinstance(dependency, Json):
-                data = dependency.value
-        url = url.format(**path_params)
-        query_params = urlencode(query, doseq=True)
-        return cls(
-            method=method,
-            url=f"{url}?{query_params}" if query_params else url,
-            query=query_params,
-            data=data.update(body),
-            headers=default_headers or {},
-            content_type="application/json",
-        )
+                params[dependency.field_name] = value
+
+    if json and json_fields:
+        json = json.update(json_fields)
+
+    headers = httpx.Headers(headers=_headers)
+    if "content-type" not in headers:
+        headers.update({"Content-Type": "application/json"})
+
+    cookies = httpx.Cookies(cookies=_cookies) if _cookies else None
+
+    return RequestDict(
+        method=method,
+        url=httpx.URL(url.format(**path_params)),
+        params=params or None,
+        headers=headers,
+        cookies=cookies or None,
+        json=json,
+        data=form_data or None,
+        timeout=timeout,
+    )

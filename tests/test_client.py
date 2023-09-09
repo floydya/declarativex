@@ -1,9 +1,10 @@
 import pytest
 
-from src.declarativex import BaseClient, declare, BodyField, Json
+from src.declarativex import BaseClient, declare, JsonField, Json
 from src.declarativex.exceptions import (
     MisconfiguredException,
     DependencyValidationError,
+    TimeoutException,
 )
 from src.declarativex.methods import SUPPORTED_METHODS
 from tests.fixtures.clients import (
@@ -129,7 +130,7 @@ class TestAsyncTodoClient:
             await self.client.misconfigured_create_post_but_with_default()
         )
         assert isinstance(created_post, dict)
-        assert created_post == {"id": 101}
+        assert created_post == {"id": 101, "data": "test"}
 
     @pytest.mark.asyncio
     async def test_misconfigured_create_post_invalid_type(self):
@@ -187,9 +188,12 @@ class TestSlowClient:
         assert response["args"]["query_delay"] == "0"
 
     def test_sync_get_data_from_slow_endpoint_timeout(self):
-        with pytest.raises(TimeoutError) as err:
+        with pytest.raises(TimeoutException) as err:
             self.client.get_data_from_slow_endpoint(delay=3)
-        assert str(err.value) == "Request timed out after 2 seconds"
+        assert str(err.value) == (
+            f"Request timed out after {2} seconds: "
+            f"GET https://httpbin.org/delay/3"
+        )
 
     @pytest.mark.asyncio
     async def test_async_get_data_from_slow_endpoint(self):
@@ -200,9 +204,12 @@ class TestSlowClient:
 
     @pytest.mark.asyncio
     async def test_async_get_data_from_slow_endpoint_timeout(self):
-        with pytest.raises(TimeoutError) as err:
+        with pytest.raises(TimeoutException) as err:
             await self.client.async_get_data_from_slow_endpoint(delay=3)
-        assert str(err.value) == "Request timed out after 1 seconds"
+        assert str(err.value) == (
+            f"Request timed out after {1} seconds: "
+            f"GET https://httpbin.org/delay/3"
+        )
 
 
 class TestMethodClient:
@@ -244,7 +251,7 @@ class TestBaseClient:
             _ = Client()
         assert str(err.value) == "base_url is required"
 
-    @pytest.mark.parametrize("field", [BodyField(...), Json(...)])
+    @pytest.mark.parametrize("field", [JsonField(...), Json(...)])
     def test_get_with_bodyfield_parameter(self, field):
         with pytest.raises(MisconfiguredException) as err:
 
@@ -285,7 +292,7 @@ class TestBaseClient:
             Warning,
             match=(
                 r"You must specify return type for your method\. "
-                r"Example\: def get_data\(\) \-\> dict\: \.\.\."
+                r"Example\: def test_method\(\.\.\.\) \-\> dict\: \.\.\."
             ),
         ):
 
@@ -303,16 +310,14 @@ class TestBaseClient:
             "/todos/{id}",
             base_url="https://jsonplaceholder.typicode.com",
         )
-        def test_method(id):
+        def test_method(id) -> dict:
             ...  # pragma: no cover
 
         with pytest.warns(
             Warning,
             match=(
-                r"Type hint for parameter with name\='id' is not specified\. "
-                r"This is not recommended as it may "
-                r"lead to unexpected behaviour\. "
-                r"Consider specifying a type hint for the parameter\."
+                r"Type hint missing for \'id\'\. "
+                r"Could lead to unexpected behaviour\."
             ),
         ):
             test_method(1)

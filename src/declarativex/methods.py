@@ -1,6 +1,5 @@
 import asyncio
 import inspect
-import logging
 import warnings
 from functools import wraps
 from typing import (
@@ -9,32 +8,27 @@ from typing import (
     Dict,
     List,
     Optional,
-    Protocol,
     Tuple,
     Type,
     TypeVar,
     Union,
     get_type_hints,
     cast,
+    Sequence,
 )
 
 import httpx
-from httpx import AsyncClient, Client, ReadTimeout
+from httpx import AsyncClient, Client
 
 from .client import BaseClient
 from .compatibility import parse_obj_as
-from .dependencies import BodyField, Json
-from .exceptions import MisconfiguredException
-from .request import Request
+from .dependencies import JsonField, Json
+from .exceptions import MisconfiguredException, TimeoutException
+from .middlewares import Middleware, AsyncMiddleware
+from .request import build_request, RequestDict
 
 ReturnType = TypeVar("ReturnType")
 SUPPORTED_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE"}
-
-
-class BaseClientProtocol(Protocol):
-    base_url: str
-    default_query_params: Optional[Dict[str, Any]]
-    headers: Optional[Dict[str, str]]
 
 
 class RequestExecutor:
@@ -44,6 +38,7 @@ class RequestExecutor:
     base_url: str
     default_query_params: Dict[str, Any]
     default_headers: Dict[str, str]
+    middlewares: Sequence[Union[Middleware, AsyncMiddleware]]
 
     def __init__(
         self,
@@ -53,6 +48,9 @@ class RequestExecutor:
         base_url: str = "",
         default_query_params: Optional[Dict[str, Any]] = None,
         default_headers: Optional[Dict[str, str]] = None,
+        middlewares: Optional[
+            Sequence[Union[Middleware, AsyncMiddleware]]
+        ] = None,
     ) -> None:
         self.method = method
         self.path = path
@@ -60,6 +58,7 @@ class RequestExecutor:
         self.base_url = base_url
         self.default_query_params = default_query_params or {}
         self.default_headers = default_headers or {}
+        self.middlewares = middlewares or []
 
     @staticmethod
     def update_kwargs_with_args(
@@ -74,7 +73,7 @@ class RequestExecutor:
             cls_instance = self_ or cls_
         return cls_instance, kwargs
 
-    def build_request(self, func, *args, **kwargs) -> Request:
+    def build_request(self, func, *args, **kwargs) -> RequestDict:
         cls_instance, kwargs = self.update_kwargs_with_args(
             func, *args, **kwargs
         )
@@ -87,10 +86,18 @@ class RequestExecutor:
         base_url = cls_base_url or self.base_url
         query_params = {**cls_query_params, **self.default_query_params}
         headers = {**cls_headers, **self.default_headers}
-        return Request.build_request(
+        self.middlewares = (
+            [*cls_instance.middlewares, *self.middlewares]
+            if cls_instance
+            else self.middlewares
+        )
+        for middleware in self.middlewares:
+            middleware.set_func(func)
+        return build_request(
             func=func,
             method=self.method,
             path=self.path,
+            timeout=self.timeout,
             base_url=base_url,
             default_query_params=query_params,
             default_headers=headers,
@@ -115,7 +122,6 @@ class RequestExecutor:
         return_type = (
             Dict if return_type == type(None) else return_type  # noqa
         )
-        logging.critical(return_type)
         is_list = cls._is_list_of_objects(return_type)
         if isinstance(raw_response, list) and not is_list:
             return_type = List[return_type]  # type: ignore[valid-type]
@@ -131,20 +137,28 @@ class RequestExecutor:
         *args: Any,
         **kwargs: Any,
     ):
-        request = self.build_request(func, *args, **kwargs)
+        request_data = self.build_request(func, *args, **kwargs)
         try:
-            async with AsyncClient(timeout=self.timeout) as client:
-                response = await client.request(
-                    request.method,
-                    request.url,
-                    headers=request.headers,
-                    json=request.data,
-                )
-        except ReadTimeout:
-            raise TimeoutError(
-                f"Request timed out after {self.timeout} seconds"
+            async with AsyncClient(
+                timeout=self.timeout, follow_redirects=True
+            ) as client:
+                request = client.build_request(**request_data)
+                for middleware in self.middlewares:
+                    request = await middleware.modify_request(request)  # type: ignore[misc] # noqa
+                response = await client.send(request)
+        except httpx.TimeoutException:
+            raise TimeoutException(
+                timeout=self.timeout,
+                request=request,
             )
-        return self.process_response(func=func, response=response)
+        processed_response = self.process_response(
+            func=func, response=response
+        )
+        for middleware in self.middlewares:
+            processed_response = await middleware.modify_response(
+                processed_response
+            )
+        return processed_response
 
     def execute_sync(
         self,
@@ -152,20 +166,24 @@ class RequestExecutor:
         *args: Any,
         **kwargs: Any,
     ):
-        request = self.build_request(func, *args, **kwargs)
+        request_data = self.build_request(func, *args, **kwargs)
         try:
-            with Client(timeout=self.timeout) as client:
-                response = client.request(
-                    request.method,
-                    request.url,
-                    headers=request.headers,
-                    json=request.data,
-                )
-        except ReadTimeout:
-            raise TimeoutError(
-                f"Request timed out after {self.timeout} seconds"
+            with Client(follow_redirects=True) as client:
+                request = client.build_request(**request_data)
+                for middleware in self.middlewares:
+                    request = middleware.modify_request(request)  # type: ignore[assignment] # noqa
+                response = client.send(request)
+        except httpx.TimeoutException:
+            raise TimeoutException(
+                timeout=self.timeout,
+                request=request,
             )
-        return self.process_response(func=func, response=response)
+        processed_response = self.process_response(
+            func=func, response=response
+        )
+        for middleware in self.middlewares:
+            processed_response = middleware.modify_response(processed_response)
+        return processed_response
 
 
 def declare(
@@ -175,6 +193,7 @@ def declare(
     base_url: str = "",
     default_query_params: Optional[Dict[str, Any]] = None,
     default_headers: Optional[Dict[str, str]] = None,
+    middlewares: Optional[Sequence[Union[Middleware, AsyncMiddleware]]] = None,
 ) -> Callable[..., ReturnType]:
     method = method.upper()
     if method not in SUPPORTED_METHODS:
@@ -190,6 +209,7 @@ def declare(
         base_url=base_url,
         default_query_params=default_query_params,
         default_headers=default_headers,
+        middlewares=middlewares,
     )
 
     def wrapper(func):
@@ -197,7 +217,7 @@ def declare(
         any_body_or_json_field = any(
             param.default
             for param in signature.parameters.values()
-            if isinstance(param.default, (BodyField, Json))
+            if isinstance(param.default, (JsonField, Json))
         )
         if method == "GET" and any_body_or_json_field:
             raise MisconfiguredException(
@@ -208,7 +228,7 @@ def declare(
         if isinstance(func_return_type, type(None)):
             warnings.warn(
                 "You must specify return type for your method. "
-                "Example: def get_data() -> dict: ..."
+                f"Example: def {func.__name__}(...) -> dict: ..."
             )
 
         func.__annotations__["return"] = func_return_type

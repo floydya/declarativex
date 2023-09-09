@@ -1,6 +1,8 @@
 from collections.abc import Iterable
 from typing import Type, Sequence, Union
 
+import httpx
+
 
 class DeclarativeException(Exception):
     pass
@@ -33,3 +35,11 @@ class DependencyValidationError(DeclarativeException):
                 f"use Optional[{type_hint}] instead."
             )
         super().__init__(message)
+
+
+class TimeoutException(DeclarativeException):
+    def __init__(self, timeout: Union[int, None], request: httpx.Request):
+        super().__init__(
+            f"Request timed out after {timeout} seconds: "
+            f"{request.method} {request.url}"
+        )

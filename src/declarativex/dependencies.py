@@ -4,13 +4,13 @@ import json
 import warnings
 from typing import (
     Any,
-    Generic,
-    Optional,
     Type,
     TypeVar,
     Union,
-    get_args,
+    Optional,
+    Generic,
     get_origin,
+    get_args,
 )
 
 from pydantic import BaseModel
@@ -23,117 +23,80 @@ empty = inspect.Parameter.empty
 
 
 class Dependency(Generic[Value]):
-    _value: Any
-    required: bool = False
-    """
-    Base class for declarative HTTP client parameters.
-
-    Parameters:
-        default (Any): Default value for the parameter.
-        field_name (str | None):
-            Name of the field to replace the keyword argument.
-    """
-
-    field_name: str
-    _type: Type[Value]
-    value: Value
+    """Base class for declarative HTTP client parameters."""
 
     def __init__(
         self, default: Any = empty, field_name: Optional[str] = None
     ) -> None:
-        if default is Ellipsis:
-            default = empty
-        self.default_value = default
-        self._override_field_name = field_name
+        self.default_value = default if default is not Ellipsis else empty
+        self.field_name: str = field_name  # type: ignore[assignment]
+        self._type: Optional[Type[Value]] = None
+        self.value: Optional[Value] = None
 
     def prepare(
-        self, field_name: str, type_hint: Type, value: Any
+        self, field_name: str, type_hint: Type[Value], value: Any
     ) -> "Dependency":
-        self.field_name = (
-            self._override_field_name
-            if self._override_field_name
-            else field_name
-        )
+        self.field_name = self.field_name or field_name
         self._type = type_hint
-        value = self.validate(
-            type_hint=type_hint, field_name=field_name, value=value
-        )
-        self.value = self.parse(value)
+        self.value = self._parse(self._validate(type_hint, value))
         return self
 
-    def validate(self, type_hint: Type, field_name: str, value: Any) -> Any:
-        if type_hint is None:
+    def _validate(self, type_hint: Optional[Type[Value]], value: Any) -> Any:
+        if not type_hint:
             warnings.warn(
-                "Type hint for parameter with "
-                f"name='{field_name}' is not specified. "
-                "This is not recommended as it may "
-                "lead to unexpected behaviour. "
-                "Consider specifying a type hint for the parameter.",
+                f"Type hint missing for '{self.field_name}'. "
+                "Could lead to unexpected behaviour.",
                 stacklevel=3,
             )
             return value
-
-        # Checks if the type_hint is a Union type
         if get_origin(type_hint) is Union:
-            # Gets the arguments for the Union type
-            args = get_args(type_hint)
-
-            # Special handling for Optional (which is just Union[T, None])
-            if type(None) in args:
-                args = tuple(t for t in args if not isinstance(t, type(None)))
-
-                if value is None:
-                    if self.default_value is not empty:
-                        return self.default_value
-                    return value
-            elif value is None:
-                raise DependencyValidationError(
-                    expected_type=args,
-                    received_type=type(value),
-                )
-
-            if not any(isinstance(value, arg) for arg in args):
-                raise DependencyValidationError(
-                    expected_type=args, received_type=type(value)
-                )
-
-            return value
-
+            return self._validate_union_type(type_hint, value)
         if not isinstance(value, type_hint):
-            if value is None:
-                raise DependencyValidationError(
-                    expected_type=type_hint,
-                    received_type=type(value),
-                )
             raise DependencyValidationError(
                 expected_type=type_hint, received_type=type(value)
+            )
+        return value
+
+    def _validate_union_type(self, type_hint: Type[Value], value: Any) -> Any:
+        args = get_args(type_hint)
+
+        if value is None:
+            if self.default_value is empty and type(None) not in args:
+                raise DependencyValidationError(
+                    expected_type=args, received_type=type(None)
+                )
+            return (
+                self.default_value
+                if self.default_value is not empty
+                else value
+            )
+
+        if not any(isinstance(value, arg) for arg in args):
+            raise DependencyValidationError(
+                expected_type=args, received_type=type(value)
             )
 
         return value
 
-    @staticmethod
-    def parse(value: Value) -> Any:
+    def _parse(self, value: Value) -> Any:
         return str(value)
 
 
-class Path(Dependency):
-    _value: str
-    required: bool = True
+class StringDependency(Dependency[str]):
+    """Dependency that expects a string value."""
+
+    def _parse(self, value: str) -> Optional[str]:
+        return str(value) if value is not None else None
 
 
-class Query(Dependency):
-    _value: str
+class AnyDependency(Dependency[Value]):
+    """Dependency that can accept any value."""
 
 
-class BodyField(Dependency):
-    _value: dict | str | int | float | bool | None
+class DictDependency(Dependency[dict]):
+    """Dependency that expects a dict value."""
 
-
-class Json(Dependency):
-    _value: dict
-
-    @staticmethod
-    def parse(value: Any) -> dict:
+    def _parse(self, value: Any) -> dict:
         if isinstance(value, BaseModel):
             return to_dict(value)
         if dataclasses.is_dataclass(value):
@@ -143,15 +106,47 @@ class Json(Dependency):
         return value
 
 
-ParamType = TypeVar("ParamType", bound=Dependency)
+class Path(StringDependency):
+    pass
 
+
+class Query(StringDependency):
+    pass
+
+
+class JsonField(AnyDependency):
+    pass
+
+
+class Header(StringDependency):
+    def __init__(self, header_name: str, default: Any = empty) -> None:
+        super().__init__(default=default, field_name=header_name)
+
+
+class Cookie(StringDependency):
+    def __init__(self, cookie_name: str, default: Any = empty) -> None:
+        super().__init__(default=default, field_name=cookie_name)
+
+
+class Json(DictDependency):
+    pass
+
+
+class FormData(Json):
+    pass
+
+
+ParamType = TypeVar("ParamType", bound=Dependency)
 
 __all__ = [
     "Dependency",
     "Path",
     "Query",
-    "BodyField",
+    "JsonField",
     "Json",
+    "Header",
+    "Cookie",
+    "FormData",
     "ParamType",
     "empty",
 ]
