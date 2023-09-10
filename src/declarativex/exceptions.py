@@ -5,7 +5,7 @@ import httpx
 
 from .compatibility import parse_obj_as
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from .request import RequestDict
 
 
