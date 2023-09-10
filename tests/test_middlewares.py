@@ -16,7 +16,7 @@ from src.declarativex import (
 from src.declarativex.exceptions import MisconfiguredException, HTTPException
 
 
-class TestMiddleware(Middleware[dict]):
+class SyncTestMiddleware(Middleware[dict]):
     def modify_request(self, request: httpx.Request):
         request.url = httpx.URL("https://jsonplaceholder.typicode.com/posts/3")
         return request
@@ -39,7 +39,7 @@ class AsyncTestMiddleware(AsyncMiddleware[dict]):
 
 class JsonTestClient(BaseClient):
     base_url = "https://jsonplaceholder.typicode.com"
-    middlewares = [TestMiddleware()]
+    middlewares = [SyncTestMiddleware()]
 
     @declare("GET", "/posts/{post_id}")
     def get_post(self, post_id: int) -> dict:
@@ -63,7 +63,7 @@ class AsyncJsonTestClient(BaseClient):
     ) -> dict:
         pass  # pragma: no cover
 
-    @declare("PATCH", "/posts", middlewares=[TestMiddleware()])
+    @declare("PATCH", "/posts", middlewares=[SyncTestMiddleware()])
     async def update_post(self, title: str = JsonField()) -> dict:
         pass  # pragma: no cover
 
