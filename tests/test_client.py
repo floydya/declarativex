@@ -135,7 +135,12 @@ class TestAsyncTodoClient:
             await self.client.misconfigured_create_post_but_with_default()
         )
         assert isinstance(created_post, dict)
-        assert created_post == {"userId": 1, "title": "foo", "body": "bar", "id": 101}
+        assert created_post == {
+            "userId": 1,
+            "title": "foo",
+            "body": "bar",
+            "id": 101,
+        }
 
     @pytest.mark.asyncio
     async def test_misconfigured_create_post_invalid_type(self):
@@ -194,7 +199,7 @@ class TestSlowClient:
         response = self.client.get_data_from_slow_endpoint(
             delay=0, query_delay=0
         )
-        assert response["args"]["query_delay"] == '0'
+        assert response["args"]["query_delay"] == "0"
 
     def test_sync_get_data_from_slow_endpoint_timeout(self):
         with pytest.raises(TimeoutException) as err:
@@ -209,7 +214,7 @@ class TestSlowClient:
         response = await self.client.async_get_data_from_slow_endpoint(
             delay=0, query_delay=0
         )
-        assert response["args"]["query_delay"] == '0'
+        assert response["args"]["query_delay"] == "0"
 
     @pytest.mark.asyncio
     async def test_async_get_data_from_slow_endpoint_timeout(self):
@@ -222,7 +227,6 @@ class TestSlowClient:
 
 
 class TestMethodClient:
-
     @pytest.fixture(autouse=True)
     def setup(self, mock_async_client, mock_client):
         pass
@@ -257,7 +261,6 @@ class TestMethodClient:
 
 
 class TestBaseClient:
-
     @pytest.fixture(autouse=True)
     def setup(self, mock_async_client, mock_client):
         pass
@@ -343,11 +346,14 @@ class TestBaseClient:
 
 
 def test_sync_update_error_mapping():
-
     class BadRequestModel(BaseModel):
         detail: dict
 
-    @declare("POST", "/validate", base_url="https://f82a0729-07a6-4036-8847-c21c8716e8c1.mock.pstmn.io")
+    @declare(
+        "POST",
+        "/validate",
+        base_url="https://f82a0729-07a6-4036-8847-c21c8716e8c1.mock.pstmn.io",
+    )
     def api_call() -> dict:
         ...  # pragma: no cover
 
@@ -357,7 +363,6 @@ def test_sync_update_error_mapping():
     except HTTPException as err:
         assert isinstance(err.response, dict)
         assert err.response["detail"] == {"body": "This field is required!"}
-
 
     @declare(
         "POST",
@@ -378,11 +383,14 @@ def test_sync_update_error_mapping():
 
 @pytest.mark.asyncio
 async def test_async_update_error_mapping():
-
     class BadRequestModel(BaseModel):
         detail: dict
 
-    @declare("POST", "/validate", base_url="https://f82a0729-07a6-4036-8847-c21c8716e8c1.mock.pstmn.io")
+    @declare(
+        "POST",
+        "/validate",
+        base_url="https://f82a0729-07a6-4036-8847-c21c8716e8c1.mock.pstmn.io",
+    )
     async def api_call() -> dict:
         ...  # pragma: no cover
 
@@ -392,7 +400,6 @@ async def test_async_update_error_mapping():
     except HTTPException as err:
         assert isinstance(err.response, dict)
         assert err.response["detail"] == {"body": "This field is required!"}
-
 
     @declare(
         "POST",

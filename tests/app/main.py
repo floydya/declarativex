@@ -12,7 +12,9 @@ from .schemas import Comment, BaseComment, Todo, BaseTodo, Post, BasePost
 
 app = FastAPI()
 
-with open(pathlib.Path(__file__).parent / "fixtures" / "comments.json", "r") as f:
+with open(
+    pathlib.Path(__file__).parent / "fixtures" / "comments.json", "r"
+) as f:
     comments = json.load(f)
 
 with open(pathlib.Path(__file__).parent / "fixtures" / "todos.json", "r") as f:
@@ -120,7 +122,9 @@ def mock_query(query_param_1=Query(...), query_param_2=Query(...)):
 
 
 @app.get("/delay/{delay}")
-async def mock_delay(delay: int, query_delay: Optional[int] = Query(default=None)):
+async def mock_delay(
+    delay: int, query_delay: Optional[int] = Query(default=None)
+):
     await asyncio.sleep(delay)
     return {
         "delay": delay,

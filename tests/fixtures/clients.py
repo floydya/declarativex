@@ -69,7 +69,9 @@ class TodoClient(BaseClient):
     @declare("POST", "/posts")
     async def misconfigured_create_post_but_with_default(
         self,
-        body: Optional[Union[BasePost, dict]] = Json(default=BasePost(userId=1, title="foo", body="bar")),
+        body: Optional[Union[BasePost, dict]] = Json(
+            default=BasePost(userId=1, title="foo", body="bar")
+        ),
     ) -> dict:
         ...  # pragma: no cover
 

@@ -103,7 +103,9 @@ class TestAsyncClient:
             assert False
         except HTTPException as err:
             assert err._response.status_code == 422
-            assert err.request.url == "https://jsonplaceholder.typicode.com/posts"
+            assert (
+                err.request.url == "https://jsonplaceholder.typicode.com/posts"
+            )
             assert err.request.method == "POST"
             assert err.request.headers["X-Api-Key"] == "test_key"
             assert err.request.headers["Cookie"] == "session=test_session"

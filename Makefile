@@ -6,7 +6,7 @@ black:
 	black .
 
 flake8:
-	flake8 .
+	flake8 src/declarativex
 
 pylint:
 	pylint src/declarativex

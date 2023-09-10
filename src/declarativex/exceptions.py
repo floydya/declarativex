@@ -1,9 +1,12 @@
 from collections.abc import Iterable
-from typing import Type, Sequence, Union, Mapping, Optional
+from typing import Type, Sequence, Union, Mapping, Optional, TYPE_CHECKING
 
 import httpx
 
 from .compatibility import parse_obj_as
+
+if TYPE_CHECKING:
+    from .request import RequestDict
 
 
 class DeclarativeException(Exception):
@@ -40,7 +43,7 @@ class DependencyValidationError(DeclarativeException):
 
 
 class TimeoutException(DeclarativeException):
-    def __init__(self, timeout: Union[int, None], request: httpx.Request):
+    def __init__(self, timeout: Union[float, None], request: httpx.Request):
         super().__init__(
             f"Request timed out after {timeout} seconds: "
             f"{request.method} {request.url}"
@@ -52,7 +55,7 @@ class HTTPException(DeclarativeException):
         self,
         request: httpx.Request,
         response: httpx.Response,
-        raw_request: dict,
+        raw_request: "RequestDict",
         error_mappings: Optional[Mapping[int, Type]] = None,
     ):
         self.request = request

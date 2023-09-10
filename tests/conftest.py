@@ -15,15 +15,13 @@ from tests.app.main import app as mock_app
 
 
 class AsyncClient(httpx.AsyncClient):
-
     def __init__(self, *args, **kwargs):  # pragma: no cover
-        kwargs['app'] = mock_app
-        kwargs['base_url'] = "http://testserver"
+        kwargs["app"] = mock_app
+        kwargs["base_url"] = "http://testserver"
         super().__init__(*args, **kwargs)
 
 
 class Client(TestClient):
-
     def __init__(
         self,
         base_url: str = "http://testserver",
@@ -65,7 +63,7 @@ class Client(TestClient):
             transport=transport,
             follow_redirects=follow_redirects,
             cookies=cookies,
-            timeout=timeout
+            timeout=timeout,
         )
 
 
