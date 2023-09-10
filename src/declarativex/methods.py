@@ -266,11 +266,17 @@ def declare(
 
         func.__annotations__["return"] = func_return_type
 
-        @wraps(func)
-        def inner(*args: Any, **kwargs: Any):
-            if asyncio.iscoroutinefunction(func):
-                return executor.execute_async(func, *args, **kwargs)
-            return executor.execute_sync(func, *args, **kwargs)
+        if asyncio.iscoroutinefunction(func):
+
+            @wraps(func)
+            async def inner(*args: Any, **kwargs: Any):
+                return await executor.execute_async(func, *args, **kwargs)
+
+        else:
+
+            @wraps(func)
+            def inner(*args: Any, **kwargs: Any):
+                return executor.execute_sync(func, *args, **kwargs)
 
         inner.__annotations__["return"] = func_return_type
         return inner

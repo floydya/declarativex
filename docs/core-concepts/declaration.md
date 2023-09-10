@@ -64,14 +64,14 @@ You can use any of the custom dataclasses, Pydantic models or built-in types to 
     Corresponding warning will be shown at the runtime.
 
 
-## Class-based declaration
+### Class-based declaration
 
 Class-based declaration is the most common way to declare clients. It's also the most flexible one.
 
 Use the `BaseClient` class as a base class for your client and declare methods using the `declare` decorator.
 
 
-### Example
+#### Example
 
 ```.python title="my_client.py"
 from declarativex import BaseClient, declare
@@ -96,13 +96,13 @@ my_client = MyClient()
     It will be used to get the `base_url`, `default_query_params` and `default_headers` values.
 
 
-## Function-based declaration
+### Function-based declaration
 
 
 Function-based declaration is a great alternative to class-based declaration. It's more concise and doesn't require
 you to create a class. Commonly used for simple clients with one endpoint.
 
-### Example
+#### Example
 
 ```.python title="my_client.py"
 from declarativex import declare
@@ -124,3 +124,43 @@ def get_user(user_id: int) -> dict:
     
     If you're using function-based declaration, you don't need to add `self` as first argument.
     The parameters of the decorator will be used to get the `base_url`, `default_query_params` and `default_headers` values.
+
+
+## `#!python @rate_limiter` decorator
+
+The `#!python @rate_limiter` decorator is used to limit the number of requests to the endpoint.
+
+Use it to prevent your client from being banned by the server.
+
+It supports both sync and async declarations.
+
+### Syntax
+
+```python
+@rate_limiter(max_calls, interval)
+@declare(...)
+def method_name() -> dict:
+    ...
+```
+
+### Parameters
+
+- `max_calls` - maximum number of calls to the endpoint
+- `interval` - interval between calls in seconds
+
+!!! note "Rate limit"
+    The rate limit is applied to the endpoint, not to the client.
+
+
+### Example
+```.python title="my_client.py"
+from declarativex import declare, rate_limiter
+
+
+@rate_limiter(max_calls=10, interval=60)
+@declare("GET", "/users/{user_id}")
+def get_user(user_id: int) -> dict:
+    ...
+
+```
+
