@@ -5,7 +5,7 @@ from src.declarativex import (
     declare,
     Path,
     Query,
-    BodyField,
+    JsonField,
     Json,
 )
 from tests.fixtures.models import BaseTodo, Comment, Todo, BaseTodoDataClass
@@ -37,9 +37,9 @@ class TodoClient(BaseClient):
     @declare("POST", "/posts")
     async def create_post(
         self,
-        title: str = BodyField(...),
-        body: str = BodyField(...),
-        user_id: int = BodyField(field_name="userId"),
+        title: str = JsonField(...),
+        body: str = JsonField(...),
+        user_id: int = JsonField(field_name="userId"),
     ) -> dict:
         """
         It will produce a request:
@@ -69,7 +69,7 @@ class TodoClient(BaseClient):
     @declare("POST", "/posts")
     async def misconfigured_create_post_but_with_default(
         self,
-        body: Union[BaseTodo, dict, None] = Json(default={"data": "test"}),
+        body: Optional[Union[BaseTodo, dict]] = Json(default={"data": "test"}),
     ) -> dict:
         ...  # pragma: no cover
 
@@ -92,7 +92,7 @@ class TodoClient(BaseClient):
         self,
         post_id: int = Path(field_name="postId"),
         body: dict = Json(...),
-        user_id: int = BodyField(field_name="userId"),
+        user_id: int = JsonField(field_name="userId"),
     ) -> dict:
         ...  # pragma: no cover
 
@@ -122,7 +122,7 @@ class SlowClient(BaseClient):
     async def async_get_data_from_slow_endpoint(
         self,
         delay: int = Path(...),
-        query_delay: Optional[int] = Query(field_name="delay"),
+        query_delay: Optional[int] = Query(..., field_name="delay"),
     ) -> dict:
         ...  # pragma: no cover
 
