@@ -33,10 +33,10 @@ nav:
     - Declaration: core-concepts/declaration.md
     - Dependencies: core-concepts/dependencies.md
     - Middlewares: core-concepts/middlewares.md
+    - Mapping errors: core-concepts/error-mappings.md
     - Exceptions: core-concepts/exceptions.md
   - Compatibility: compatibility.md
   - Testing: testing.md
-  # - Examples: Examples/Examples.md
   - Contributing: contributing.md
   - License: license.md
 
@@ -46,9 +46,15 @@ edit_uri: edit/main/docs/
 
 plugins:
   - search
+#  - exclude-search:
+#      exclude:
+#        - "core-concepts/_declare-parameters.md"
   - offline
 
+
 markdown_extensions:
+  - markdown_include.include:
+      base_path: docs
   - admonition
   - abbr
   - attr_list

@@ -23,7 +23,7 @@ jobs:
       - name: Run Flake8
         run: |
           output_file="flake8-output.txt"
-          poetry run flake8 . | tee $output_file
+          poetry run flake8 src/declarativex | tee $output_file
 
       - name: Annotate code with Flake8 results
         run: |
@@ -47,7 +47,7 @@ jobs:
       - name: Run Pylint
         run: |
           output_file="pylint-output.txt"
-          poetry run pylint src/ | tee $output_file
+          poetry run pylint src/declarativex | tee $output_file
       - name: Annotate code with Pylint results
         run: |
           output_file="pylint-output.txt"
@@ -102,7 +102,7 @@ jobs:
       - name: Run mypy
         run: |
           output_file="mypy-output.txt"
-          poetry run mypy src/ | tee $output_file
+          poetry run mypy src/declarativex | tee $output_file
       - name: Annotate code with mypy results
         run: |
           output_file="mypy-output.txt"
