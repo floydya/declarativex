@@ -8,7 +8,7 @@ from src.declarativex import (
     JsonField,
     Json,
 )
-from tests.fixtures.models import BaseTodo, Comment, Todo, BaseTodoDataClass
+from tests.app.schemas import *
 
 
 class TodoClient(BaseClient):
@@ -69,21 +69,21 @@ class TodoClient(BaseClient):
     @declare("POST", "/posts")
     async def misconfigured_create_post_but_with_default(
         self,
-        body: Optional[Union[BaseTodo, dict]] = Json(default={"data": "test"}),
+        body: Optional[Union[BasePost, dict]] = Json(default=BasePost(userId=1, title="foo", body="bar")),
     ) -> dict:
         ...  # pragma: no cover
 
     @declare("POST", "/posts")
     async def create_post_pydantic(
         self,
-        body: BaseTodo = Json(...),
+        body: BasePost = Json(...),
     ) -> dict:
         ...  # pragma: no cover
 
     @declare("POST", "/posts")
     async def create_post_dataclass(
         self,
-        body: BaseTodoDataClass = Json(...),
+        body: BasePostDataclass = Json(...),
     ) -> dict:
         ...  # pragma: no cover
 
@@ -91,7 +91,7 @@ class TodoClient(BaseClient):
     async def update_post_mixed(
         self,
         post_id: int = Path(field_name="postId"),
-        body: dict = Json(...),
+        data: dict = Json(...),
         user_id: int = JsonField(field_name="userId"),
     ) -> dict:
         ...  # pragma: no cover
@@ -118,11 +118,11 @@ class SlowClient(BaseClient):
     ) -> dict:
         ...  # pragma: no cover
 
-    @declare("GET", "/delay/{delay}", timeout=1)
+    @declare("GET", "/delay/{delay}", timeout=2)
     async def async_get_data_from_slow_endpoint(
         self,
-        delay: int = Path(...),
-        query_delay: Optional[int] = Query(..., field_name="delay"),
+        delay: int,
+        query_delay: Optional[int],
     ) -> dict:
         ...  # pragma: no cover
 

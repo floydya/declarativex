@@ -5,20 +5,21 @@ from src.declarativex.exceptions import (
     MisconfiguredException,
     DependencyValidationError,
     TimeoutException,
+    HTTPException,
 )
 from src.declarativex.methods import SUPPORTED_METHODS
+from tests.app.schemas import *
 from tests.fixtures.clients import (
     SlowClient,
     TodoClient,
     get_todo_by_id_raw,
     sync_get_todo_by_id_raw,
 )
-from tests.fixtures.models import Comment, Todo, BaseTodo, BaseTodoDataClass
 
 
 class TestAsyncTodoClient:
     @pytest.fixture(autouse=True)
-    def setup(self):
+    def setup(self, mock_async_client, mock_client):
         self.client = TodoClient()
 
     @pytest.mark.asyncio
@@ -66,26 +67,30 @@ class TestAsyncTodoClient:
     @pytest.mark.asyncio
     async def test_create_post_pydantic(self):
         created_post = await self.client.create_post_pydantic(
-            body=BaseTodo(
+            body=BasePost(
                 userId=1,
                 title="foo",
-                completed=False,
+                body="bar",
             )
         )
         assert isinstance(created_post, dict)
         assert created_post["id"] == 101
+        assert created_post["body"] == "bar"
+        assert created_post["title"] == "foo"
 
     @pytest.mark.asyncio
     async def test_create_post_dataclass(self):
         created_post = await self.client.create_post_dataclass(
-            body=BaseTodoDataClass(
+            body=BasePostDataclass(
                 userId=1,
                 title="foo",
-                completed=False,
+                body="bar",
             )
         )
         assert isinstance(created_post, dict)
         assert created_post["id"] == 101
+        assert created_post["body"] == "bar"
+        assert created_post["title"] == "foo"
 
     @pytest.mark.asyncio
     async def test_misconfigured_create_post(self):
@@ -130,7 +135,7 @@ class TestAsyncTodoClient:
             await self.client.misconfigured_create_post_but_with_default()
         )
         assert isinstance(created_post, dict)
-        assert created_post == {"id": 101, "data": "test"}
+        assert created_post == {"userId": 1, "title": "foo", "body": "bar", "id": 101}
 
     @pytest.mark.asyncio
     async def test_misconfigured_create_post_invalid_type(self):
@@ -141,16 +146,16 @@ class TestAsyncTodoClient:
 
         assert str(err.value) == (
             "Value of type str is not supported. "
-            "Expected one of: ['BaseTodo', 'dict', 'NoneType']."
+            "Expected one of: ['BasePost', 'dict', 'NoneType']."
         )
 
     @pytest.mark.asyncio
     async def test_update_post_mixed(self):
         created_post = await self.client.update_post_mixed(
             post_id=1,
-            body={
+            data={
                 "title": "foo",
-                "completed": False,
+                "body": "bar",
             },
             user_id=1,
         )
@@ -163,11 +168,15 @@ class TestAsyncTodoClient:
             post_id=1,
             body={
                 "title": "foo",
-                "completed": False,
+                "body": "bar",
+                "userId": 1,
             },
         )
         assert isinstance(updated_post, dict)
         assert updated_post["id"] == 1
+        assert updated_post["title"] == "foo"
+        assert updated_post["body"] == "bar"
+        assert updated_post["userId"] == 1
 
     @pytest.mark.asyncio
     async def test_delete_post(self):
@@ -185,14 +194,14 @@ class TestSlowClient:
         response = self.client.get_data_from_slow_endpoint(
             delay=0, query_delay=0
         )
-        assert response["args"]["query_delay"] == "0"
+        assert response["args"]["query_delay"] == '0'
 
     def test_sync_get_data_from_slow_endpoint_timeout(self):
         with pytest.raises(TimeoutException) as err:
-            self.client.get_data_from_slow_endpoint(delay=3)
+            self.client.get_data_from_slow_endpoint(delay=5)
         assert str(err.value) == (
-            f"Request timed out after {2} seconds: "
-            f"GET https://httpbin.org/delay/3"
+            f"Request timed out after {2.0} seconds: "
+            f"GET https://httpbin.org/delay/5"
         )
 
     @pytest.mark.asyncio
@@ -200,19 +209,24 @@ class TestSlowClient:
         response = await self.client.async_get_data_from_slow_endpoint(
             delay=0, query_delay=0
         )
-        assert response["args"]["delay"] == "0"
+        assert response["args"]["query_delay"] == '0'
 
     @pytest.mark.asyncio
     async def test_async_get_data_from_slow_endpoint_timeout(self):
         with pytest.raises(TimeoutException) as err:
-            await self.client.async_get_data_from_slow_endpoint(delay=3)
+            await self.client.async_get_data_from_slow_endpoint(delay=5)
         assert str(err.value) == (
-            f"Request timed out after {1} seconds: "
-            f"GET https://httpbin.org/delay/3"
+            f"Request timed out after {2.0} seconds: "
+            f"GET https://httpbin.org/delay/5"
         )
 
 
 class TestMethodClient:
+
+    @pytest.fixture(autouse=True)
+    def setup(self, mock_async_client, mock_client):
+        pass
+
     @pytest.mark.asyncio
     async def test_get_todo_by_id_raw(self):
         response = await get_todo_by_id_raw(id=1)
@@ -243,6 +257,11 @@ class TestMethodClient:
 
 
 class TestBaseClient:
+
+    @pytest.fixture(autouse=True)
+    def setup(self, mock_async_client, mock_client):
+        pass
+
     def test_client_with_no_base_url(self):
         class Client(BaseClient):
             pass
@@ -321,3 +340,72 @@ class TestBaseClient:
             ),
         ):
             test_method(1)
+
+
+def test_sync_update_error_mapping():
+
+    class BadRequestModel(BaseModel):
+        detail: dict
+
+    @declare("POST", "/validate", base_url="https://f82a0729-07a6-4036-8847-c21c8716e8c1.mock.pstmn.io")
+    def api_call() -> dict:
+        ...  # pragma: no cover
+
+    try:
+        api_call()
+        assert False
+    except HTTPException as err:
+        assert isinstance(err.response, dict)
+        assert err.response["detail"] == {"body": "This field is required!"}
+
+
+    @declare(
+        "POST",
+        "/validate",
+        base_url="https://f82a0729-07a6-4036-8847-c21c8716e8c1.mock.pstmn.io",
+        error_mappings={400: BadRequestModel},
+    )
+    def api_call_mapping() -> dict:
+        ...  # pragma: no cover
+
+    try:
+        api_call_mapping()
+        assert False
+    except HTTPException as err:
+        assert isinstance(err.response, BadRequestModel)
+        assert err.response.detail == {"body": "This field is required!"}
+
+
+@pytest.mark.asyncio
+async def test_async_update_error_mapping():
+
+    class BadRequestModel(BaseModel):
+        detail: dict
+
+    @declare("POST", "/validate", base_url="https://f82a0729-07a6-4036-8847-c21c8716e8c1.mock.pstmn.io")
+    async def api_call() -> dict:
+        ...  # pragma: no cover
+
+    try:
+        await api_call()
+        assert False
+    except HTTPException as err:
+        assert isinstance(err.response, dict)
+        assert err.response["detail"] == {"body": "This field is required!"}
+
+
+    @declare(
+        "POST",
+        "/validate",
+        base_url="https://f82a0729-07a6-4036-8847-c21c8716e8c1.mock.pstmn.io",
+        error_mappings={400: BadRequestModel},
+    )
+    async def api_call_mapping() -> dict:
+        ...  # pragma: no cover
+
+    try:
+        await api_call_mapping()
+        assert False
+    except HTTPException as err:
+        assert isinstance(err.response, BadRequestModel)
+        assert err.response.detail == {"body": "This field is required!"}

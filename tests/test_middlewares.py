@@ -13,7 +13,7 @@ from src.declarativex import (
     Cookie,
     Json,
 )
-from src.declarativex.exceptions import MisconfiguredException
+from src.declarativex.exceptions import MisconfiguredException, HTTPException
 
 
 class TestMiddleware(Middleware[dict]):
@@ -90,18 +90,23 @@ class TestClient:
 
 class TestAsyncClient:
     @pytest.fixture(autouse=True)
-    def setup(self):
+    def setup(self, mock_async_client, mock_client):
         self.client = AsyncJsonTestClient()
 
     @pytest.mark.asyncio
     async def test_async_middleware(self):
         post = json.dumps({"title": "test"})
-
-        post = await self.client.create_post(
-            post=post, x_api_key="test_key", session="test_session"
-        )
-        assert post["id"] == 101
-        assert post["title"] == "async_test_title"
+        try:
+            await self.client.create_post(
+                post=post, x_api_key="test_key", session="test_session"
+            )
+            assert False
+        except HTTPException as err:
+            assert err._response.status_code == 422
+            assert err.request.url == "https://jsonplaceholder.typicode.com/posts"
+            assert err.request.method == "POST"
+            assert err.request.headers["X-Api-Key"] == "test_key"
+            assert err.request.headers["Cookie"] == "session=test_session"
 
     @pytest.mark.asyncio
     async def test_middleware_with_async_method(self):
@@ -112,3 +117,11 @@ class TestAsyncClient:
             "Middleware cannot be used with async functions, "
             "use AsyncMiddleware instead."
         )
+
+
+@pytest.mark.asyncio
+async def test_async_middleware():
+    post = json.dumps({"title": "test"})
+    await AsyncJsonTestClient().create_post(
+        post=post, x_api_key="test_key", session="test_session"
+    )

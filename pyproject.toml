@@ -46,6 +46,7 @@ pytest-cov = "^4.1.0"
 mypy = "^1.5.1"
 types-setuptools = "^68.1.0.1"
 mkdocs-material = "^9.2.8"
+fastapi = "<1"
 
 [build-system]
 requires = ["poetry-core"]
