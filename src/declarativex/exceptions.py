@@ -26,7 +26,7 @@ class DependencyValidationError(DeclarativeException):
             message += f"Expected type: {expected_type.__name__}."
         if self._is_none:
             type_hint = (
-                Union[*expected_type]
+                f"Union{[type_.__name__ for type_ in expected_type]}"
                 if isinstance(expected_type, Iterable)
                 else expected_type.__name__
             )

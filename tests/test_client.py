@@ -96,7 +96,7 @@ class TestAsyncTodoClient:
             "Value of type NoneType is not supported. "
             "Expected one of: ['BaseTodo', 'dict']. "
             "Specify a default value or use Optional"
-            "[typing.Union[tests.fixtures.models.BaseTodo, dict]] instead."
+            "[Union['BaseTodo', 'dict']] instead."
         )
 
     @pytest.mark.asyncio
