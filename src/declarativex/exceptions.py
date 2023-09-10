@@ -1,7 +1,9 @@
 from collections.abc import Iterable
-from typing import Type, Sequence, Union
+from typing import Type, Sequence, Union, Mapping, Optional
 
 import httpx
+
+from .compatibility import parse_obj_as
 
 
 class DeclarativeException(Exception):
@@ -43,3 +45,32 @@ class TimeoutException(DeclarativeException):
             f"Request timed out after {timeout} seconds: "
             f"{request.method} {request.url}"
         )
+
+
+class HTTPException(DeclarativeException):
+    def __init__(
+        self,
+        request: httpx.Request,
+        response: httpx.Response,
+        raw_request: dict,
+        error_mappings: Optional[Mapping[int, Type]] = None,
+    ):
+        self.request = request
+        self.raw_request = raw_request
+        self._response = response
+        self.__error_mappings = error_mappings or {}
+        self._model = None
+        self.status_code = response.status_code
+        if response.status_code in self.__error_mappings:
+            self._model = self.__error_mappings[response.status_code]
+        super().__init__(
+            f"Request failed with status code {response.status_code}: "
+            f"{request.method} {request.url}"
+        )
+
+    @property
+    def response(self):
+        response = self._response.json()
+        if self._model:
+            return parse_obj_as(self._model, response)
+        return response

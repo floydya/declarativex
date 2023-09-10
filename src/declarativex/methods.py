@@ -18,12 +18,11 @@ from typing import (
 )
 
 import httpx
-from httpx import AsyncClient, Client
 
 from .client import BaseClient
 from .compatibility import parse_obj_as
 from .dependencies import JsonField, Json
-from .exceptions import MisconfiguredException, TimeoutException
+from .exceptions import MisconfiguredException, TimeoutException, HTTPException
 from .middlewares import Middleware, AsyncMiddleware
 from .request import build_request, RequestDict
 
@@ -34,31 +33,37 @@ SUPPORTED_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE"}
 class RequestExecutor:
     method: str
     path: str
-    timeout: Optional[int]
+    timeout: Optional[float]
     base_url: str
     default_query_params: Dict[str, Any]
     default_headers: Dict[str, str]
     middlewares: Sequence[Union[Middleware, AsyncMiddleware]]
+    error_mappings: Dict[int, Type]
 
     def __init__(
         self,
         method: str,
         path: str,
-        timeout: Optional[int] = None,
+        timeout: Optional[Union[int, float]] = None,
         base_url: str = "",
         default_query_params: Optional[Dict[str, Any]] = None,
         default_headers: Optional[Dict[str, str]] = None,
         middlewares: Optional[
             Sequence[Union[Middleware, AsyncMiddleware]]
         ] = None,
+        error_mappings: Optional[Dict[int, Type]] = None,
     ) -> None:
         self.method = method
         self.path = path
-        self.timeout = timeout
+        self.timeout = float(timeout) if timeout else None
+        self._timeout = httpx.Timeout(
+            timeout, connect=timeout, read=timeout, write=timeout, pool=timeout
+        )
         self.base_url = base_url
         self.default_query_params = default_query_params or {}
         self.default_headers = default_headers or {}
         self.middlewares = middlewares or []
+        self.error_mappings = error_mappings or {}
 
     @staticmethod
     def update_kwargs_with_args(
@@ -90,6 +95,11 @@ class RequestExecutor:
             [*cls_instance.middlewares, *self.middlewares]
             if cls_instance
             else self.middlewares
+        )
+        self.error_mappings = (
+            {**cls_instance.error_mappings, **self.error_mappings}
+            if cls_instance
+            else self.error_mappings
         )
         for middleware in self.middlewares:
             middleware.set_func(func)
@@ -137,15 +147,24 @@ class RequestExecutor:
         *args: Any,
         **kwargs: Any,
     ):
-        request_data = self.build_request(func, *args, **kwargs)
+        raw_request = self.build_request(func, *args, **kwargs)
         try:
-            async with AsyncClient(
-                timeout=self.timeout, follow_redirects=True
+            async with httpx.AsyncClient(
+                timeout=self._timeout, follow_redirects=True
             ) as client:
-                request = client.build_request(**request_data)
+                request = client.build_request(**raw_request)
                 for middleware in self.middlewares:
                     request = await middleware.modify_request(request)  # type: ignore[misc] # noqa
                 response = await client.send(request)
+                try:
+                    response.raise_for_status()
+                except httpx.HTTPStatusError as exc:
+                    raise HTTPException(
+                        request=request,
+                        response=response,
+                        raw_request=raw_request,
+                        error_mappings=self.error_mappings,
+                    ) from exc
         except httpx.TimeoutException:
             raise TimeoutException(
                 timeout=self.timeout,
@@ -166,13 +185,24 @@ class RequestExecutor:
         *args: Any,
         **kwargs: Any,
     ):
-        request_data = self.build_request(func, *args, **kwargs)
+        raw_request = self.build_request(func, *args, **kwargs)
         try:
-            with Client(follow_redirects=True) as client:
-                request = client.build_request(**request_data)
+            with httpx.Client(
+                timeout=self._timeout, follow_redirects=True
+            ) as client:
+                request = client.build_request(**raw_request)
                 for middleware in self.middlewares:
                     request = middleware.modify_request(request)  # type: ignore[assignment] # noqa
                 response = client.send(request)
+                try:
+                    response.raise_for_status()
+                except httpx.HTTPStatusError as exc:
+                    raise HTTPException(
+                        request=request,
+                        response=response,
+                        raw_request=raw_request,
+                        error_mappings=self.error_mappings,
+                    ) from exc
         except httpx.TimeoutException:
             raise TimeoutException(
                 timeout=self.timeout,
@@ -195,6 +225,7 @@ def declare(
     default_query_params: Optional[Dict[str, Any]] = None,
     default_headers: Optional[Dict[str, str]] = None,
     middlewares: Optional[Sequence[Union[Middleware, AsyncMiddleware]]] = None,
+    error_mappings: Optional[Dict[int, Type]] = None,
 ) -> Callable[..., ReturnType]:
     method = method.upper()
     if method not in SUPPORTED_METHODS:
@@ -211,6 +242,7 @@ def declare(
         default_query_params=default_query_params,
         default_headers=default_headers,
         middlewares=middlewares,
+        error_mappings=error_mappings,
     )
 
     def wrapper(func):

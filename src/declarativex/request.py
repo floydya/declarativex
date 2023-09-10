@@ -20,7 +20,6 @@ class RequestDict(TypedDict):
     headers: httpx.Headers
     cookies: Optional[httpx.Cookies]
     json: Optional[Dict[str, Any]]
-    data: Optional[Dict[str, Any]]
     timeout: Optional[float]
 
 
@@ -41,7 +40,6 @@ def build_request(
     json_fields: Dict[str, Any] = {}
     json: Optional[Dict[str, Any]] = None
     _cookies: Dict[str, Any] = {}
-    form_data: Optional[Dict[str, Any]] = None
 
     for dependency in get_params(func, path, **values):
         if isinstance(dependency, Path):
@@ -60,7 +58,9 @@ def build_request(
                 params[dependency.field_name] = value
 
     if json and json_fields:
-        json = json.update(json_fields)
+        json.update(json_fields)
+    elif json_fields:
+        json = json_fields
 
     headers = httpx.Headers(headers=_headers)
     if "content-type" not in headers:
@@ -75,6 +75,5 @@ def build_request(
         headers=headers,
         cookies=cookies or None,
         json=json,
-        data=form_data or None,
         timeout=timeout,
     )
