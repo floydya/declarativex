@@ -189,6 +189,7 @@ class RequestExecutor:
 def declare(
     method: str,
     path: str,
+    *,
     timeout: Optional[int] = None,
     base_url: str = "",
     default_query_params: Optional[Dict[str, Any]] = None,

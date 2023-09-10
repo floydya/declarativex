@@ -29,14 +29,16 @@ extra_javascript:
 nav:
   - Home: index.md
   - Core Concepts:
-    - BaseClient: Core_Concepts/BaseClient.md
-    - Declaration: Core_Concepts/Declaration.md
-    - Parameters: Core_Concepts/Parameters.md
-  - Compatibility: Compatibility.md
-  - Testing: Testing.md
+    - BaseClient: core-concepts/base-client.md
+    - Declaration: core-concepts/declaration.md
+    - Dependencies: core-concepts/dependencies.md
+    - Middlewares: core-concepts/middlewares.md
+    - Exceptions: core-concepts/exceptions.md
+  - Compatibility: compatibility.md
+  - Testing: testing.md
   # - Examples: Examples/Examples.md
-  - Contributing: Contributing.md
-  - License: License.md
+  - Contributing: contributing.md
+  - License: license.md
 
 repo_name: floydya/declarativex
 repo_url: https://github.com/floydya/declarativex

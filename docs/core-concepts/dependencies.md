@@ -1,4 +1,4 @@
-# Param Types Explained 🤓
+# Dependencies Explained 🤓
 
 ## A few words about params 😶
 
@@ -131,3 +131,46 @@ def create_baz(
 ```
 
 There you go, you've put it to use. Happy now? 😄
+
+## Header 🎩
+
+Headers are a bit different from the other parameters. 
+
+The main difference - `field_name` argument is moved to first position and is `required`.
+
+So, you can use them like this:
+
+```.py title="my_client.py" hl_lines="6"
+from declarativex import declare, Header
+
+
+@declare("POST", "/bar")
+def create_baz(
+    x_foo: str = Header("X-Foo")
+) -> dict:
+    ...
+```
+
+!!! danger
+    The `field_name` param is required for headers, because the header name is not the same as the function argument name.
+
+
+## Cookie 🍪
+
+Cookies are similar to [Header](#header).
+
+So, you can use them like this:
+
+```.py title="my_client.py" hl_lines="6"
+from declarativex import declare, Cookie
+
+
+@declare("POST", "/bar")
+def create_baz(
+    session_id: str = Cookie("session_id")
+) -> dict:
+    ...
+```
+
+!!! danger
+    The `field_name` param is required for cookies, because the cookie name is not the same as the function argument name.

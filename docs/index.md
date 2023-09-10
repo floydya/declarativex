@@ -32,7 +32,8 @@ def get_user(user_id: int) -> dict:
 response = get_user(user_id=1)
 print(response)
 ```
-???+ success "You should see the following output:"
+
+!!! success "You should see the following output:"
     ```
     {
       "id": 1,
@@ -50,13 +51,14 @@ See? No fuss, just clean and straightforward code.
 
 ## What's Next?
 
-Feel free to explore the documentation to get a deeper understanding of DeclarativeX. Whether you're looking to understand the core concepts, decorators, or how to set up parameters, we've got you covered.
+Feel free to explore the documentation to get a deeper understanding of DeclarativeX. Whether you're looking to understand the core concepts, decorators, or how to set up dependencies, we've got you covered.
 
-- [BaseClient](Core_Concepts/BaseClient.md)
-- [Declaration](Core_Concepts/Declaration.md)
-- [Parameters](Core_Concepts/Parameters.md)
+- [BaseClient](core-concepts/base-client.md)
+- [Declaration](core-concepts/declaration.md)
+- [Dependencies](core-concepts/dependencies.md)
+- [Middlewares](core-concepts/middlewares.md)
 
 ## Contributing
 
-Love DeclarativeX and want to contribute? Awesome! Check out our [Contribution Guidelines](Contributing.md).
+Love DeclarativeX and want to contribute? Awesome! Check out our [Contribution Guidelines](contributing.md).
 

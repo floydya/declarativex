@@ -175,9 +175,49 @@ request. Well, `BaseClient` has got you covered.
     client = MyClient()
     ```
 
+### `middlewares`
+
+Middlewares are a powerful tool that allows you to modify requests and responses.
+
+=== "Using class attribute"
+    ```{.python title="my_client.py"}
+    from declarativex import BaseClient
+
+    from myapp.middlewares import MyMiddleware
+
+
+    class MyClient(BaseClient):
+        base_url = "https://api.example.com"
+        middlewares = [MyMiddleware()]
+
+
+    client = MyClient()
+    ```
+
+=== "Using __init__ argument"
+    ```{.python title="my_client.py"}
+    from declarativex import BaseClient
+
+    from myapp.middlewares import MyMiddleware
+
+
+    class MyClient(BaseClient):
+        pass
+
+
+    client = MyClient(
+        base_url="https://api.example.com",
+        middlewares=[MyMiddleware()]
+    )
+    ```
+
+!!! tip
+    They are covered in detail in the [Middlewares](./middlewares.md) section.
+
+
 ## Wrapping Up
 
 So there you have it, the `BaseClient` in all its glory. It's the cornerstone of DeclarativeX, designed to make your
 life easier and your code cleaner.
 
-Feel like diving deeper? Check out the [Declaration](./Declaration.md) and [Parameters](./Parameters.md) sections next.
+Feel like diving deeper? Check out the [Declaration](./declaration.md) and [Dependencies](./dependencies.md) sections next.

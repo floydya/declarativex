@@ -11,7 +11,7 @@ The `#!python @declare` decorator is the core of DeclarativeX. It's used to decl
 ### Syntax
 
 ```python
-@declare(method, path, *, base_url, timeout, default_headers, default_query_params)
+@declare(method, path, *, base_url, timeout, default_headers, default_query_params, middlewares)
 def method_name() -> dict:
     ...
 ```
@@ -57,12 +57,13 @@ whether they're required or optional, and what each argument is for.
 
 #### Keyword-only arguments
 
-|           Name           |       Type       |              Required               |    Arg type    | Description                                                       |
-|:------------------------:|:----------------:|:-----------------------------------:|:--------------:|-------------------------------------------------------------------|
-|        `base_url`        |  `#!python str`  | [Not always](#base_url "See below") |    Keyword     | Sets the base URL for the request.                                |
-|        `timeout`         |  `#!python int`  |    No, default: `#!python None`     |    Keyword     | The timeout to use.                                               |
-|    `default_headers`     | `#!python dict`  |    No, default: `#!python None`     |    Keyword     | The headers to use with every request.                            |
-|  `default_query_params`  | `#!python dict`  |    No, default: `#!python None`     |    Keyword     | The parameters to use with every request.                         |
+|           Name           |                      Type                      |              Required               |    Arg type    | Description                                                    |
+|:------------------------:|:----------------------------------------------:|:-----------------------------------:|:--------------:|----------------------------------------------------------------|
+|        `base_url`        |                 `#!python str`                 | [Not always](#base_url "See below") |    Keyword     | Sets the base URL for the request.                             |
+|        `timeout`         |                 `#!python int`                 |    No, default: `#!python None`     |    Keyword     | The timeout to use.                                            |
+|    `default_headers`     |                `#!python dict`                 |    No, default: `#!python None`     |    Keyword     | The headers to use with every request.                         |
+|  `default_query_params`  |                `#!python dict`                 |    No, default: `#!python None`     |    Keyword     | The params to use with every request.                          |
+| `middlewares` | `#!python list`  |    No, default: `#!python None`     |    Keyword     | The [middlewares](./middlewares.md) to use with every request. |
 
 <div id="base_url" markdown>
 !!! danger "`base_url`"

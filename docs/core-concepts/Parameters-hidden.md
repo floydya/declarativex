@@ -1,4 +1,4 @@
-# Parameters 
+# Dependencies 
 
 ## Introduction
 
@@ -6,9 +6,9 @@ Parameters are a powerful feature of DeclarativeX that let you customize your HT
 
 They're designed to make your life easier, letting you focus on what really matters — your application logic.
 
-## Types of Parameters
+## Types of Dependencies
 
-DeclarativeX supports the following types of parameters:
+DeclarativeX supports the following types:
 
 - [Path parameter](#path-parameter)
 - [Query parameter](#query-parameter)
