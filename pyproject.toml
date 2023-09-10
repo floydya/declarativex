@@ -47,6 +47,8 @@ mypy = "^1.5.1"
 types-setuptools = "^68.1.0.1"
 mkdocs-material = "^9.2.8"
 fastapi = "<1"
+markdown-include = "^0.8.1"
+mkdocs-exclude-search = "^0.6.5"
 
 [build-system]
 requires = ["poetry-core"]

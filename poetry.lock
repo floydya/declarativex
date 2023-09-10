@@ -529,6 +529,23 @@ docs = ["mdx-gh-links (>=0.2)", "mkdocs (>=1.0)", "mkdocs-nature (>=0.4)"]
 testing = ["coverage", "pyyaml"]
 
 [[package]]
+name = "markdown-include"
+version = "0.8.1"
+description = "A Python-Markdown extension which provides an 'include' function"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "markdown-include-0.8.1.tar.gz", hash = "sha256:1d0623e0fc2757c38d35df53752768356162284259d259c486b4ab6285cdbbe3"},
+    {file = "markdown_include-0.8.1-py3-none-any.whl", hash = "sha256:32f0635b9cfef46997b307e2430022852529f7a5b87c0075c504283e7cc7db53"},
+]
+
+[package.dependencies]
+markdown = ">=3.0"
+
+[package.extras]
+tests = ["pytest"]
+
+[[package]]
 name = "markupsafe"
 version = "2.1.3"
 description = "Safely add untrusted strings to HTML/XML markup."
@@ -639,6 +656,20 @@ watchdog = ">=2.0"
 [package.extras]
 i18n = ["babel (>=2.9.0)"]
 min-versions = ["babel (==2.9.0)", "click (==7.0)", "colorama (==0.4)", "ghp-import (==1.0)", "importlib-metadata (==4.3)", "jinja2 (==2.11.1)", "markdown (==3.2.1)", "markupsafe (==2.0.1)", "mergedeep (==1.3.4)", "packaging (==20.5)", "pathspec (==0.11.1)", "platformdirs (==2.2.0)", "pyyaml (==5.1)", "pyyaml-env-tag (==0.1)", "typing-extensions (==3.10)", "watchdog (==2.0)"]
+
+[[package]]
+name = "mkdocs-exclude-search"
+version = "0.6.5"
+description = "A mkdocs plugin that lets you exclude selected files or sections from the search index."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "mkdocs-exclude-search-0.6.5.tar.gz", hash = "sha256:6a126367653caf946c56e446ff30ffdec931438a3e2a8740feff3f8682d52a54"},
+    {file = "mkdocs_exclude_search-0.6.5-py3-none-any.whl", hash = "sha256:475e372dd17195700acd00213bcc804280d63f39cb7a0c76a801aceefd2807a6"},
+]
+
+[package.dependencies]
+mkdocs = ">=1.0.4"
 
 [[package]]
 name = "mkdocs-material"
@@ -1520,4 +1551,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "baaf58a1bd923bd83f8f8f80602efa95b166eed7ada03473dbed767e103c1a46"
+content-hash = "2c97c7a68824230f50609614e3fac9488caeae945bc98380192381fa4383a94f"

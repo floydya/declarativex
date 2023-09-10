@@ -18,6 +18,8 @@ class MyClient(BaseClient):
 
 That's it! You've just created your first `BaseClient`. 🎉
 
+## {!core-concepts/_declare-parameters.md!}
+
 ## Attributes
 
 ### `base_url`
