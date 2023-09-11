@@ -124,5 +124,5 @@ jobs:
           path: .cache
           restore-keys: |
             mkdocs-
-      - run: pip install mkdocs-material
+      - run: pip install mkdocs-material markdown-include mkdocs-exclude-search
       - run: mkdocs gh-deploy --force
