@@ -1,11 +1,14 @@
 import asyncio
 import time
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
+from pytest_mock import MockerFixture
 
-from declarativex import rate_limiter
-from src.declarativex import BaseClient, declare
+from src.declarativex import BaseClient, declare, rate_limiter
+from src.declarativex.rate_limiter import (
+    time as rate_limiter_time, asyncio as rate_limiter_asyncio
+)
 
 
 class MyTestClient(BaseClient):
@@ -28,26 +31,24 @@ class TestRateLimit:
         self.client = MyTestClient()
 
     @pytest.mark.asyncio
-    async def test_async_rate_limit(self, mock_async_client):
-        with patch(
-            "src.declarativex.rate_limiter.asyncio.sleep",
-            MagicMock(wraps=asyncio.sleep),
-        ):
-            current_time = time.perf_counter()
-            for i in range(3):
-                result = await self.client.async_get_post(i)
-                assert "id" in result
-            total_time = time.perf_counter() - current_time
-            assert 2 < total_time < 3
+    async def test_async_rate_limit(self, mock_async_client, mocker: MockerFixture):
+        mocker.patch.object(
+            rate_limiter_asyncio, "sleep", MagicMock(wraps=asyncio.sleep),
+        )
+        current_time = time.perf_counter()
+        for i in range(3):
+            result = await self.client.async_get_post(i)
+            assert "id" in result
+        total_time = time.perf_counter() - current_time
+        assert 2 < total_time < 3
 
-    def test_sync_rate_limit(self, mock_client):
-        with patch(
-            "src.declarativex.rate_limiter.time.sleep",
-            MagicMock(wraps=time.sleep),
-        ):
-            current_time = time.perf_counter()
-            for i in range(3):
-                result = self.client.sync_get_post(i)
-                assert "id" in result
-            total_time = time.perf_counter() - current_time
-            assert 2 < total_time < 3
+    def test_sync_rate_limit(self, mock_client, mocker: MockerFixture):
+        mocker.patch.object(
+            rate_limiter_time, "sleep", MagicMock(wraps=time.sleep),
+        )
+        current_time = time.perf_counter()
+        for i in range(3):
+            result = self.client.sync_get_post(i)
+            assert "id" in result
+        total_time = time.perf_counter() - current_time
+        assert 2 < total_time < 3
