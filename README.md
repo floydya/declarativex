@@ -18,7 +18,7 @@ simplify your life. Now you can focus on what actually matters — your business
 - **Data Validation**: Got Pydantic? We've got your back on robust data validation.
 - **Async Support**: Async you said? Yep, we're all in.
 - **Rate limiting**: Don't want to get banned? We've got you covered.
-- **Middlewares**: Need to add some custom logic? Specify your custom dependency.
+- **Middlewares**: Need to add some custom logic? Specify your custom middleware.
 - **Automatic body parsing**: Don't want to parse the response manually? Provide a dataclass or Pydantic model as return type.
 
 ## How to Get It 🛠
