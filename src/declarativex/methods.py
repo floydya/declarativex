@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 from functools import wraps
 from typing import (
     Any,
@@ -7,10 +8,8 @@ from typing import (
     Optional,
     Type,
     Union,
-    get_type_hints,
     Sequence,
 )
-
 
 from .executors import AsyncExecutor, SyncExecutor
 from .middlewares import Middleware, AsyncMiddleware
@@ -61,7 +60,9 @@ def http(
                     endpoint_configuration=endpoint_configuration
                 ).execute(func, *args, **kwargs)
 
-        inner.__annotations__["return"] = get_type_hints(func).get("return")
+        inner.__annotations__["return"] = (
+            inspect.signature(func).return_annotation
+        )
         return inner
 
     return wrapper

@@ -1,5 +1,5 @@
 import dataclasses
-from inspect import get_annotations
+import inspect
 from typing import (
     Any,
     Callable,
@@ -15,11 +15,11 @@ from urllib.parse import urljoin
 
 import httpx
 
-from .exceptions import MisconfiguredException
-from .middlewares import AsyncMiddleware, Middleware
 from .client import BaseClient
 from .compatibility import parse_obj_as
 from .dependencies import RequestModifier
+from .exceptions import MisconfiguredException
+from .middlewares import AsyncMiddleware, Middleware
 from .utils import ReturnType, SUPPORTED_METHODS
 from .warnings import warn_list_return_type
 
@@ -47,7 +47,7 @@ class Response:
         return parse_obj_as(type_hint, raw_response)
 
     def as_type_for_func(self, func: Callable[..., ReturnType]) -> ReturnType:
-        return_type: type = get_annotations(func).get("return", None)
+        return_type: type = inspect.signature(func).return_annotation
         return self.as_type(return_type)
 
 

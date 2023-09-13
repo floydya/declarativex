@@ -2,8 +2,8 @@ from typing import List, Optional, Union, get_args
 
 import pytest
 
-from src.declarativex.dependencies import Empty
 from src.declarativex import http, BaseClient, Query, Json, JsonField
+from src.declarativex.dependencies import Empty
 from src.declarativex.exceptions import (
     DependencyValidationError,
     MisconfiguredException,
@@ -145,7 +145,6 @@ def test_endpoint_default_empty_value():
         pass
     with pytest.warns(DeclarativeWarning):
         assert len(get_posts(...)) == 100
-
 
 
 @pytest.mark.parametrize("dependency", [JsonField, Json])
