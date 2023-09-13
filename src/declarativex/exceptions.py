@@ -20,11 +20,9 @@ class MisconfiguredException(DeclarativeException):
 class DependencyValidationError(DeclarativeException):
 
     @classmethod
-    def _name_accessor(cls, entity: Any) -> str:
+    def _name_accessor(cls, entity: Any) -> str:  # pragma: no cover
         if hasattr(entity, "__name__"):
             return entity.__name__
-        if hasattr(entity, "__class__"):
-            return cls._name_accessor(entity)
         return str(entity)
 
     def __init__(
