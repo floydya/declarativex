@@ -46,9 +46,6 @@ edit_uri: edit/main/docs/
 
 plugins:
   - search
-#  - exclude-search:
-#      exclude:
-#        - "core-concepts/_declare-parameters.md"
   - offline
 
 
