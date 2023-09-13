@@ -82,7 +82,7 @@ jobs:
       - name: Install Pydantic
         run: poetry add "pydantic${{ matrix.pydantic-version }}"
       - name: Run Pytest
-        run: poetry run pytest tests/
+        run: poetry run pytest -n 6 tests/
 
   build-and-publish:
     needs: [flake8, pylint, mypy, pytest]

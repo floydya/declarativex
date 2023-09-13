@@ -3,7 +3,7 @@ import warnings
 from typing import Generic, List, TypeVar
 
 from pydantic import BaseModel, AnyHttpUrl
-
+from pydantic.generics import GenericModel
 
 AnyModel = TypeVar("AnyModel", bound=BaseModel)
 
@@ -11,7 +11,7 @@ AnyModel = TypeVar("AnyModel", bound=BaseModel)
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
 
-    class PaginatedResponse(BaseModel, Generic[AnyModel]):
+    class PaginatedResponse(GenericModel, Generic[AnyModel]):
         page: int
         per_page: int
         total: int
@@ -21,7 +21,7 @@ with warnings.catch_warnings():
         class Config:
             arbitrary_types_allowed = True
 
-    class SingleResponse(BaseModel, Generic[AnyModel]):
+    class SingleResponse(GenericModel, Generic[AnyModel]):
         data: AnyModel
 
         class Config:

@@ -2,7 +2,11 @@
 import abc
 import inspect
 import threading
-from asyncio import wait_for
+from asyncio import (
+    wait_for,
+    CancelledError,
+    TimeoutError as AsyncioTimeoutError,
+)
 from queue import Empty, Queue
 from typing import Any, Callable, Dict, Optional, Tuple
 
@@ -147,11 +151,11 @@ class AsyncExecutor(Executor):
                     func(**kwargs),
                     timeout=self.endpoint_configuration.timeout,
                 )
-            except TimeoutError:
+            except (TimeoutError, CancelledError, AsyncioTimeoutError) as e:
                 raise TimeoutException(
                     timeout=self.endpoint_configuration.timeout,
                     **kwargs,
-                )
+                ) from e
         return await func(**kwargs)
 
     async def apply_request_middlewares(self, func, **kwargs) -> None:

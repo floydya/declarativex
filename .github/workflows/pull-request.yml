@@ -53,39 +53,6 @@ jobs:
           output_file="pylint-output.txt"
           python .github/workflows/annotate-pylint.py $output_file
 
-  pytest:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
-        pydantic-version: [">=1,<2", ">=2,<3"]
-      fail-fast: false
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Install Poetry
-        run: pipx install poetry
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: poetry
-      - name: Install dependencies
-        run: poetry install
-      - name: Install Pydantic
-        run: poetry add "pydantic${{ matrix.pydantic-version }}"
-      - name: Build coverage file
-        run: |
-          set -e  # Stop the script if any command fails
-          poetry run pytest --junitxml=pytest.xml --cov=src/declarativex tests/ | tee pytest-coverage.txt
-      - name: Pytest coverage comment
-        uses: MishaKav/pytest-coverage-comment@main
-        if: matrix.python-version == '3.11' && matrix.pydantic-version == '>=2,<3'
-        with:
-          pytest-coverage-path: pytest-coverage.txt
-          junitxml-path: pytest.xml
-
   mypy:
     runs-on: ubuntu-latest
     steps:
@@ -108,3 +75,54 @@ jobs:
         run: |
           output_file="mypy-output.txt"
           python .github/workflows/annotate-mypy.py $output_file
+
+  pytest:
+    runs-on: ubuntu-latest
+    needs: [flake8, pylint, mypy]
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        pydantic-version: [">=1,<2", ">=2,<3"]
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: poetry
+      - name: Install dependencies
+        run: poetry install
+      - name: Install Pydantic
+        run: poetry add "pydantic${{ matrix.pydantic-version }}"
+      - name: Run Pytest
+        run: |
+          poetry run pytest -n 6 tests/
+
+  coverage:
+    runs-on: ubuntu-latest
+    needs: [pytest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+          cache: poetry
+      - name: Install dependencies
+        run: poetry install
+      - name: Build coverage file
+        run: |
+          poetry run pytest -n 6 --junitxml=pytest.xml --cov=src/declarativex tests/ | tee pytest-coverage.txt
+      - name: Pytest coverage comment
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-coverage-path: pytest-coverage.txt
+          junitxml-path: pytest.xml

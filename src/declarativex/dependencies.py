@@ -199,7 +199,7 @@ class RequestModifier:
                 dependency = Path(default=val.default)
             else:
                 dependency = Query(default=val.default)
-            dependency.type_hint = inspect.get_annotations(func).get(key, None)
+            dependency.type_hint = func.__annotations__.get(key, None)
             dependency.field_name = key
             dependency.value = values.get(key, Empty)
             dependencies.append(dependency)

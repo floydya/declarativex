@@ -1,8 +1,32 @@
+import dataclasses
 import sys
+from typing import List
 
 from pydantic import BaseModel
 
 from src.declarativex import declare
+
+
+@dataclasses.dataclass
+class PostModel:
+    userId: int
+    id: int
+    title: str
+    body: str
+
+
+PostList = List[PostModel]
+
+
+@declare("GET", "/posts", base_url="https://jsonplaceholder.typicode.com")
+def get_posts_dataclass() -> PostList:
+    pass
+
+
+def test_get_posts_list_dataclass():
+    posts = get_posts_dataclass()
+    assert isinstance(posts, list)
+    assert all([isinstance(post, PostModel) for post in posts]), posts
 
 
 if sys.version_info >= (3, 11):
