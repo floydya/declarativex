@@ -11,6 +11,8 @@ from typing import (
     Union,
     List,
     get_origin,
+    TypeVar,
+    get_args,
 )
 from urllib.parse import urljoin
 
@@ -24,17 +26,55 @@ from .middlewares import AsyncMiddleware, Middleware
 from .utils import ReturnType, SUPPORTED_METHODS
 from .warnings import warn_list_return_type
 
+T = TypeVar("T")
+
 
 @dataclasses.dataclass
 class Response:
     response: httpx.Response
 
     @staticmethod
-    def __is_list_of_objects(return_type: Type) -> bool:
-        origin = get_origin(return_type)
-        if origin == list:
-            return True
-        return False
+    def __replace_type_var(type_hint: Type, replacement: Type):
+        if isinstance(type_hint, TypeVar):
+            return replacement
+        if get_origin(type_hint) is list and isinstance(
+            get_args(type_hint)[0], TypeVar
+        ):
+            return List[replacement]  # type: ignore[valid-type]
+        return type_hint
+
+    @classmethod
+    def _dataclass_from_dict(
+        cls, dataclass_type: Type[T], generic: Type, data: Dict[str, Any]
+    ) -> T:
+        field_types = {
+            f.name: cls.__replace_type_var(f.type, generic)
+            for f in dataclasses.fields(
+                dataclass_type  # type: ignore[arg-type]
+            )
+        }
+
+        # Recursively update fields that are dataclasses
+        for name, field_type in field_types.items():
+            if "__origin__" in dir(field_type) and issubclass(
+                field_type.__origin__, list
+            ):
+                elem_type = field_type.__args__[0]
+                if dataclasses.is_dataclass(elem_type):
+                    data[name] = [
+                        cls._dataclass_from_dict(
+                            elem_type, Any, elem  # type: ignore[arg-type]
+                        )
+                        for elem in data[name]
+                    ]
+            elif dataclasses.is_dataclass(field_type):
+                data[name] = cls._dataclass_from_dict(
+                    field_type, Any, data[name]  # type: ignore[arg-type]
+                )
+
+        return dataclass_type(
+            **{k: v for k, v in data.items() if k in field_types}
+        )
 
     def as_type(self, type_hint: Type):
         self.response.raise_for_status()
@@ -43,14 +83,25 @@ class Response:
         try:
             raw_response = self.response.json()
         except JSONDecodeError as e:
-            raise UnprocessableEntityException(
-                response=self.response
-            ) from e
-        is_list = self.__is_list_of_objects(type_hint)
+            raise UnprocessableEntityException(response=self.response) from e
+        return_type = type_hint
+        outer_type = get_origin(type_hint)
+        is_list = outer_type == list
+        inner_type = get_args(type_hint)[0] if is_list else type_hint
         if isinstance(raw_response, list) and not is_list:
             warn_list_return_type(type_hint)
-            type_hint = List[type_hint]  # type: ignore[valid-type]
-        return parse_obj_as(type_hint, raw_response)
+            return_type = List[type_hint]  # type: ignore[valid-type]
+
+        if dataclasses.is_dataclass(outer_type):
+            generic_args = get_args(inner_type)
+            generic_type = generic_args[0] if generic_args else None
+            return self._dataclass_from_dict(
+                outer_type,  # type: ignore[arg-type]
+                generic_type,
+                data=raw_response
+            )
+
+        return parse_obj_as(return_type, raw_response)
 
     def as_type_for_func(self, func: Callable[..., ReturnType]) -> ReturnType:
         return_type: type = inspect.signature(func).return_annotation

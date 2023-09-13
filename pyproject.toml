@@ -47,6 +47,7 @@ mypy = "^1.5.1"
 types-setuptools = "^68.1.0.1"
 mkdocs-material = "^9.2.8"
 markdown-include = "^0.8.1"
+pytest-xdist = "^3.3.1"
 
 [build-system]
 requires = ["poetry-core"]
