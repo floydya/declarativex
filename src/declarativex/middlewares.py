@@ -1,10 +1,11 @@
 import asyncio
 from abc import ABC, abstractmethod
-from typing import Callable, Generic, TypeVar, Coroutine
-
-import httpx
+from typing import Callable, Generic, TYPE_CHECKING, TypeVar, Coroutine
 
 from .exceptions import MisconfiguredException
+
+if TYPE_CHECKING:
+    from .models import RawRequest
 
 ReturnType = TypeVar("ReturnType")
 
@@ -21,7 +22,7 @@ class Middleware(Generic[ReturnType], ABC):
         self.func = func
 
     @abstractmethod
-    def modify_request(self, request: httpx.Request) -> httpx.Request:
+    def modify_request(self, request: 'RawRequest') -> 'RawRequest':
         return request  # pragma: no cover
 
     @abstractmethod
@@ -41,7 +42,7 @@ class AsyncMiddleware(Generic[ReturnType], ABC):
         self.func = func
 
     @abstractmethod
-    async def modify_request(self, request: httpx.Request) -> httpx.Request:
+    async def modify_request(self, request: 'RawRequest') -> 'RawRequest':
         return request  # pragma: no cover
 
     @abstractmethod

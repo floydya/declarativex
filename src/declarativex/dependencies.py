@@ -1,75 +1,116 @@
+import abc
 import dataclasses
+import enum
 import inspect
 import json
-import warnings
+from string import Formatter
 from typing import (
     Any,
+    Callable,
+    List,
+    TYPE_CHECKING,
     Type,
     TypeVar,
     Union,
-    Optional,
-    Generic,
-    get_origin,
     get_args,
+    get_origin,
 )
 
 from pydantic import BaseModel
 
 from .compatibility import to_dict
-from .exceptions import DependencyValidationError
+from .exceptions import DependencyValidationError, MisconfiguredException
+from .warnings import warn_no_type_hint
+
+if TYPE_CHECKING:
+    from .models import RawRequest
+
 
 Value = TypeVar("Value")
-empty = inspect.Parameter.empty
+Empty = type("Empty", (), {})()
+EMPTY_VALUES = (Empty, Ellipsis, inspect.Parameter.empty)
 
 
-class Dependency(Generic[Value]):
-    """Base class for declarative HTTP client parameters."""
+class Location(str, enum.Enum):
+    """Enum for dependency locations."""
+
+    path = "path"
+    query = "query"
+    header = "header"
+    cookie = "cookie"
+    json = "json"
+    json_field = "json_field"
+
+
+class Dependency(abc.ABC):
+    location: Location
+    request_accessor: str = ""
+    _field_name: str
+    _value: Any
 
     def __init__(
-        self, default: Any = empty, field_name: Optional[str] = None
-    ) -> None:
-        self.default_value = default if default is not Ellipsis else empty
-        self.field_name: str = field_name  # type: ignore[assignment]
-        self._type: Optional[Type[Value]] = None
-        self.value: Optional[Value] = None
+        self,
+        default: Any = Empty,
+        field_name: Union[str, None] = None,
+        type_hint: Union[Type[Value], None] = None,
+    ):
+        self.default = default
+        self._overridden_field_name = field_name
+        self._type_hint = type_hint
 
-    def prepare(
-        self, field_name: str, type_hint: Type[Value], value: Any
-    ) -> "Dependency":
-        self.field_name = self.field_name or field_name
-        self._type = type_hint
-        self.value = self._parse(self._validate(type_hint, value))
-        return self
+    @property
+    def type_hint(self) -> Union[Type[Value], None]:
+        return self._type_hint
 
-    def _validate(self, type_hint: Optional[Type[Value]], value: Any) -> Any:
-        if not type_hint:
-            warnings.warn(
-                f"Type hint missing for '{self.field_name}'. "
-                "Could lead to unexpected behaviour.",
-                stacklevel=3,
-            )
-            return value
-        if get_origin(type_hint) is Union:
-            return self._validate_union_type(type_hint, value)
-        if not isinstance(value, type_hint):
+    @type_hint.setter
+    def type_hint(self, value: Union[Type[Value], None]) -> None:
+        self._type_hint = value
+
+    @property
+    def field_name(self) -> str:
+        return self._overridden_field_name or self._field_name
+
+    @field_name.setter
+    def field_name(self, value: str) -> None:
+        self._field_name = value
+
+    @property
+    def value(self) -> Any:
+        if self._value in EMPTY_VALUES:
+            return self.default
+        return self._value
+
+    @value.setter
+    def value(self, value: Any) -> None:
+        self._value = self.validate(value)
+
+    def validate(self, value: Any) -> Any:
+        if self.type_hint:
+            return self.__validate_type_hint(value)
+        warn_no_type_hint(self.field_name)
+        return value
+
+    def __validate_type_hint(self, value: Any) -> Any:
+        if get_origin(self.type_hint) is Union:
+            return self.__validate_union_type_hint(value)
+        if not isinstance(value, self.type_hint):  # type: ignore[arg-type]
+            if value in EMPTY_VALUES and self.default not in EMPTY_VALUES:
+                return value
             raise DependencyValidationError(
-                expected_type=type_hint, received_type=type(value)
+                expected_type=self.type_hint,  # type: ignore[arg-type]
+                received_type=type(value)
             )
         return value
 
-    def _validate_union_type(self, type_hint: Type[Value], value: Any) -> Any:
-        args = get_args(type_hint)
+    def __validate_union_type_hint(self, value: Any) -> Any:
+        args = get_args(self.type_hint)
 
         if value is None:
-            if self.default_value is empty and type(None) not in args:
+            if self.default in EMPTY_VALUES and type(None) not in args:
                 raise DependencyValidationError(
                     expected_type=args, received_type=type(None)
                 )
-            return (
-                self.default_value
-                if self.default_value is not empty
-                else value
-            )
+            return self.default if value not in EMPTY_VALUES else value
 
         if not any(isinstance(value, arg) for arg in args):
             raise DependencyValidationError(
@@ -78,75 +119,112 @@ class Dependency(Generic[Value]):
 
         return value
 
-    def _parse(self, value: Value) -> Any:
-        return str(value)
+    def modify_request(self, request: "RawRequest") -> "RawRequest":
+        if self.value in EMPTY_VALUES:
+            return request
+        data = getattr(request, self.request_accessor)
+        data[self.field_name] = self.value
+        setattr(request, self.request_accessor, data)
+        return request
 
 
-class StringDependency(Dependency[str]):
-    """Dependency that expects a string value."""
-
-    def _parse(self, value: str) -> Optional[str]:
-        return str(value) if value is not None else None
+class Path(Dependency):
+    location = Location.path
+    request_accessor = "path_params"
 
 
-class AnyDependency(Dependency[Value]):
-    """Dependency that can accept any value."""
+class Query(Dependency):
+    location = Location.query
+    request_accessor = "query_params"
 
 
-class DictDependency(Dependency[dict]):
-    """Dependency that expects a dict value."""
-
-    def _parse(self, value: Any) -> dict:
-        if isinstance(value, BaseModel):
-            return to_dict(value)
-        if dataclasses.is_dataclass(value):
-            return dataclasses.asdict(value)
-        if isinstance(value, str):
-            return json.loads(value)
-        return value
+class Header(Dependency):
+    location = Location.header
+    request_accessor = "headers"
 
 
-class Path(StringDependency):
-    pass
+class Cookie(Dependency):
+    location = Location.cookie
+    request_accessor = "cookies"
 
 
-class Query(StringDependency):
-    pass
+class JsonField(Dependency):
+    location = Location.json_field
+    request_accessor = "json"
 
 
-class JsonField(AnyDependency):
-    pass
+class Json(Dependency):
+    location = Location.json
+
+    def modify_request(self, request: "RawRequest") -> "RawRequest":
+        if isinstance(self.value, BaseModel):
+            request.json = {**request.json, **to_dict(self.value)}
+        elif dataclasses.is_dataclass(self.value):
+            request.json = {**request.json, **dataclasses.asdict(self.value)}
+        elif isinstance(self.value, dict):
+            request.json = {**request.json, **self.value}
+        elif isinstance(self.value, str):
+            try:
+                request.json = {**request.json, **json.loads(self.value)}
+            except ValueError as exc:
+                raise DependencyValidationError(
+                    expected_type=self.type_hint,  # type: ignore[arg-type]
+                    received_type=str,
+                ) from exc
+        return request
 
 
-class Header(StringDependency):
-    def __init__(self, header_name: str, default: Any = empty) -> None:
-        super().__init__(default=default, field_name=header_name)
+class RequestModifier:
+    @staticmethod
+    def __extract_variables_from_url_template(url_template: str) -> List[str]:
+        return [
+            field[1] for field in Formatter().parse(url_template) if field[1]
+        ]
 
+    @classmethod
+    def prepare_request(
+        cls, request: "RawRequest", func: Callable, **values
+    ) -> "RawRequest":
+        signature = inspect.signature(func)
+        url_template_variables = cls.__extract_variables_from_url_template(
+            request.url_template
+        )
+        dependencies = []
+        for key, val in signature.parameters.items():
+            if key in ["self", "cls"]:
+                continue
+            if issubclass(val.default.__class__, Dependency):
+                dependency = val.default
+            elif key in url_template_variables:
+                dependency = Path(default=val.default)
+            else:
+                dependency = Query(default=val.default)
+            dependency.type_hint = inspect.get_annotations(func).get(key, None)
+            dependency.field_name = key
+            dependency.value = values.get(key, Empty)
+            dependencies.append(dependency)
 
-class Cookie(StringDependency):
-    def __init__(self, cookie_name: str, default: Any = empty) -> None:
-        super().__init__(default=default, field_name=cookie_name)
+        if request.method == "GET" and any(
+            isinstance(dependency, (JsonField, Json))
+            for dependency in dependencies
+        ):
+            raise MisconfiguredException(
+                "BodyField and Json fields are not supported for GET requests"
+            )
 
+        for dependency in dependencies:
+            request = dependency.modify_request(request)
+        return request
 
-class Json(DictDependency):
-    pass
-
-
-class FormData(Json):
-    pass
-
-
-ParamType = TypeVar("ParamType", bound=Dependency)
 
 __all__ = [
     "Dependency",
     "Path",
     "Query",
-    "JsonField",
-    "Json",
     "Header",
     "Cookie",
-    "FormData",
-    "ParamType",
-    "empty",
+    "JsonField",
+    "Json",
+    "RequestModifier",
+    "Empty",
 ]

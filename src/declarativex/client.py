@@ -13,6 +13,7 @@ class BaseClient:
         default_headers: Default headers for the client.
         default_query_params: Default query parameters for the client.
         middlewares: List of middlewares for the client.
+        error_mappings: Mapping of status codes to exceptions.
     """
 
     base_url: str = ""

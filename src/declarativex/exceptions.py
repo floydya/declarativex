@@ -6,7 +6,7 @@ import httpx
 from .compatibility import parse_obj_as
 
 if TYPE_CHECKING:  # pragma: no cover
-    from .request import RequestDict
+    from .models import RawRequest
 
 
 class DeclarativeException(Exception):
@@ -55,7 +55,7 @@ class HTTPException(DeclarativeException):
         self,
         request: httpx.Request,
         response: httpx.Response,
-        raw_request: "RequestDict",
+        raw_request: "RawRequest",
         error_mappings: Optional[Mapping[int, Type]] = None,
     ):
         self.request = request

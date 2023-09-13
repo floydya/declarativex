@@ -1,129 +1,135 @@
-import json
+from typing import List
 
-import httpx
 import pytest
 
-from src.declarativex import (
-    BaseClient,
-    Middleware,
-    AsyncMiddleware,
-    declare,
-    JsonField,
-    Header,
-    Cookie,
-    Json,
+from src.declarativex import BaseClient, http
+from src.declarativex.exceptions import MisconfiguredException
+from .fixtures.middlewares.dummy import (
+    SyncDummyMiddleware,
+    AsyncDummyMiddleware,
+    SyncInvalidDummyMiddleware,
+    AsyncInvalidDummyMiddleware,
 )
-from src.declarativex.exceptions import MisconfiguredException, HTTPException
 
 
-class SyncTestMiddleware(Middleware[dict]):
-    def modify_request(self, request: httpx.Request):
-        request.url = httpx.URL("https://jsonplaceholder.typicode.com/posts/3")
-        return request
-
-    def modify_response(self, response: dict) -> dict:
-        return {**response, "title": "test_title"}
-
-
-class AsyncTestMiddleware(AsyncMiddleware[dict]):
-    async def modify_request(self, request: httpx.Request):
-        assert "X-Api-Key" in request.headers
-        assert request.headers["X-Api-Key"] == "test_key"
-        assert "Cookie" in request.headers
-        assert request.headers["Cookie"] == "session=test_session"
-        return request
-
-    async def modify_response(self, response: dict) -> dict:
-        return {**response, "title": "async_test_title"}
-
-
-class JsonTestClient(BaseClient):
+class SyncTestClient(BaseClient):
+    middlewares = [SyncDummyMiddleware()]
     base_url = "https://jsonplaceholder.typicode.com"
-    middlewares = [SyncTestMiddleware()]
 
-    @declare("GET", "/posts/{post_id}")
-    def get_post(self, post_id: int) -> dict:
-        pass  # pragma: no cover
-
-    @declare("POST", "/posts", middlewares=[AsyncTestMiddleware()])
-    def create_post(self, title: str = JsonField()) -> dict:
-        pass  # pragma: no cover
+    @http("GET", "/posts")
+    def get_posts(self) -> List[dict]:
+        pass
 
 
-class AsyncJsonTestClient(BaseClient):
+class AsyncTestClient(BaseClient):
+    middlewares = [AsyncDummyMiddleware()]
     base_url = "https://jsonplaceholder.typicode.com"
-    middlewares = [AsyncTestMiddleware()]
 
-    @declare("POST", "/posts")
-    async def create_post(
-        self,
-        post: str = Json(...),
-        x_api_key: str = Header("X-Api-Key"),
-        session: str = Cookie("session"),
-    ) -> dict:
-        pass  # pragma: no cover
-
-    @declare("PATCH", "/posts", middlewares=[SyncTestMiddleware()])
-    async def update_post(self, title: str = JsonField()) -> dict:
-        pass  # pragma: no cover
+    @http("GET", "/posts")
+    async def get_posts(self) -> List[dict]:
+        pass
 
 
-class TestClient:
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        self.client = JsonTestClient()
-
-    def test_middleware(self):
-        post = self.client.get_post(1)
-        assert post["id"] == 3
-        assert post["title"] == "test_title"
-
-    def test_async_middleware_with_sync_method(self):
-        with pytest.raises(MisconfiguredException) as err:
-            self.client.create_post(title="test")
-
-        assert str(err.value) == (
-            "AsyncMiddleware cannot be used with sync functions, "
-            "use Middleware instead."
-        )
-
-
-class TestAsyncClient:
-    @pytest.fixture(autouse=True)
-    def setup(self, mock_async_client, mock_client):
-        self.client = AsyncJsonTestClient()
-
-    @pytest.mark.asyncio
-    async def test_async_middleware(self):
-        post = json.dumps({"title": "test"})
-        try:
-            await self.client.create_post(
-                post=post, x_api_key="test_key", session="test_session"
-            )
-            assert False
-        except HTTPException as err:
-            assert err._response.status_code == 422
-            assert (
-                err.request.url == "https://jsonplaceholder.typicode.com/posts"
-            )
-            assert err.request.method == "POST"
-            assert err.request.headers["X-Api-Key"] == "test_key"
-            assert err.request.headers["Cookie"] == "session=test_session"
-
-    @pytest.mark.asyncio
-    async def test_middleware_with_async_method(self):
-        with pytest.raises(MisconfiguredException) as err:
-            await self.client.update_post(title="test")
-
-        assert str(err.value) == (
-            "Middleware cannot be used with async functions, "
-            "use AsyncMiddleware instead."
-        )
+def test_sync_middleware():
+    client = SyncTestClient()
+    posts = client.get_posts()
+    # Without middleware, the userId is not present in
+    # the query params and len(posts) == 100 (the default
+    # number of posts returned by the API)
+    # With the middleware, the userId is present in the query
+    # params and len(posts) == 10 (the number of posts returned
+    # by the API for userId=1)
+    assert len(posts) == 10
+    assert all(post["userId"] == 1 for post in posts)
 
 
 @pytest.mark.asyncio
 async def test_async_middleware():
-    post = json.dumps({"title": "test"})
-    await AsyncJsonTestClient().create_post(
-        post=post, x_api_key="test_key", session="test_session"
+    client = AsyncTestClient()
+    posts = await client.get_posts()
+    # Without middleware, the userId is not present in
+    # the query params and len(posts) == 100 (the default
+    # number of posts returned by the API)
+    # With the middleware, the userId is present in the query
+    # params and len(posts) == 10 (the number of posts returned
+    # by the API for userId=2)
+    assert len(posts) == 10
+    assert all(post["userId"] == 2 for post in posts)
+
+
+def test_async_middleware_in_sync_function():
+    @http(
+        "GET",
+        "/posts",
+        base_url="https://jsonplaceholder.typicode.com",
+        middlewares=[AsyncDummyMiddleware()],
+    )
+    def get_posts() -> List[dict]:
+        pass
+
+    with pytest.raises(MisconfiguredException) as exc:
+        _ = get_posts()
+
+    assert str(exc.value) == (
+        "AsyncMiddleware cannot be used with sync functions, "
+        "use Middleware instead."
+    )
+
+
+@pytest.mark.asyncio
+async def test_sync_middleware_in_async_function():
+    @http(
+        "GET",
+        "/posts",
+        base_url="https://jsonplaceholder.typicode.com",
+        middlewares=[SyncDummyMiddleware()],
+    )
+    async def get_posts() -> List[dict]:
+        pass
+
+    with pytest.raises(MisconfiguredException) as exc:
+        _ = await get_posts()
+
+    assert str(exc.value) == (
+        "Middleware cannot be used with async functions, "
+        "use AsyncMiddleware instead."
+    )
+
+
+def test_sync_invalid_middleware():
+    @http(
+        "GET",
+        "/posts",
+        base_url="https://jsonplaceholder.typicode.com",
+        middlewares=[SyncInvalidDummyMiddleware()],
+    )
+    def get_posts() -> List[dict]:
+        pass
+
+    with pytest.raises(MisconfiguredException) as exc:
+        _ = get_posts()
+
+    assert str(exc.value) == (
+        "SyncInvalidDummyMiddleware.modify_request "
+        "must return a RawRequest"
+    )
+
+
+@pytest.mark.asyncio
+async def test_async_invalid_middleware():
+    @http(
+        "GET",
+        "/posts",
+        base_url="https://jsonplaceholder.typicode.com",
+        middlewares=[AsyncInvalidDummyMiddleware()],
+    )
+    async def get_posts() -> List[dict]:
+        pass
+
+    with pytest.raises(MisconfiguredException) as exc:
+        _ = await get_posts()
+
+    assert str(exc.value) == (
+        "AsyncInvalidDummyMiddleware.modify_request "
+        "must return a RawRequest"
     )

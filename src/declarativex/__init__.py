@@ -7,7 +7,7 @@ from .dependencies import (
     Header,
     Cookie,
 )
-from .methods import declare
+from .methods import declare, http
 from .middlewares import Middleware, AsyncMiddleware
 from .rate_limiter import rate_limiter
 
