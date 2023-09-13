@@ -1,7 +1,6 @@
 import json
 import time
 from json import JSONDecodeError
-from typing import Union
 
 import httpx
 import pytest
@@ -19,10 +18,6 @@ from .fixtures import (
     pydantic,
 )
 
-SyncClientType = Union[
-    sync_pydantic_client, sync_dictionary_client, sync_dataclass_client
-]
-
 
 @pytest.mark.parametrize(
     "client,response_type",
@@ -32,7 +27,7 @@ SyncClientType = Union[
         (sync_dictionary_client, dict),
     ],
 )
-def test_sync_get_user(client: SyncClientType, response_type):
+def test_sync_get_user(client, response_type):
     user = client.get_user(1)
     assert isinstance(user, response_type)
     if isinstance(user, dict):
@@ -49,7 +44,7 @@ def test_sync_get_user(client: SyncClientType, response_type):
         (sync_dictionary_client, dict),
     ],
 )
-def test_sync_get_users(client: SyncClientType, response_type):
+def test_sync_get_users(client, response_type):
     users = client.get_users()
     assert isinstance(users, response_type)
     if isinstance(users, dict):
@@ -82,7 +77,7 @@ def test_sync_get_users(client: SyncClientType, response_type):
         ),
     ],
 )
-def test_sync_create_user(client: SyncClientType, body, response_type):
+def test_sync_create_user(client, body, response_type):
     user = client.create_user(user=body)
     assert isinstance(user, response_type)
     if isinstance(user, dict):
@@ -115,7 +110,7 @@ def test_sync_create_user(client: SyncClientType, body, response_type):
         (sync_dictionary_client, dict),
     ],
 )
-def test_sync_update_user(client: SyncClientType, response_type):
+def test_sync_update_user(client, response_type):
     user = client.update_user(user_id=1, name="John", job="worker")
     assert isinstance(user, response_type)
     if isinstance(user, dict):
@@ -132,10 +127,11 @@ def test_sync_update_user(client: SyncClientType, response_type):
         sync_dictionary_client,
     ],
 )
-def test_sync_delete_user(client: SyncClientType):
+def test_sync_delete_user(client):
     response = client.delete_user(1)
     assert isinstance(response, httpx.Response)
     assert response.status_code == 204
+    assert response.text == ""
 
 
 @pytest.mark.parametrize(
@@ -146,7 +142,7 @@ def test_sync_delete_user(client: SyncClientType):
         (sync_dictionary_client, dict),
     ],
 )
-def test_sync_get_resources_list(client: SyncClientType, response_type):
+def test_sync_get_resources_list(client, response_type):
     resources = client.get_resources()
     assert isinstance(resources, response_type)
     if isinstance(resources, dict):
@@ -168,7 +164,7 @@ def test_sync_get_resources_list(client: SyncClientType, response_type):
     ],
 )
 def test_sync_get_resource(
-    client: SyncClientType, response_type, resource_type
+    client, response_type, resource_type
 ):
     resource = client.get_resource(1)
     assert isinstance(resource, response_type)
@@ -197,7 +193,7 @@ def test_sync_get_resource(
         (sync_dictionary_client, dict, dict),
     ],
 )
-def test_sync_register(client: SyncClientType, response_type, error_type):
+def test_sync_register(client, response_type, error_type):
     user = client.register(
         user={"email": "eve.holt@reqres.in", "password": "q1w2e3r4t5y6"}
     )

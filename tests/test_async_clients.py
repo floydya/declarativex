@@ -2,7 +2,6 @@ import asyncio
 import json
 import time
 from json import JSONDecodeError
-from typing import Union
 
 import httpx
 import pytest
@@ -20,10 +19,6 @@ from .fixtures import (
     pydantic,
 )
 
-AsyncClientType = Union[
-    async_pydantic_client, async_dictionary_client, async_dataclass_client
-]
-
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
@@ -34,7 +29,7 @@ AsyncClientType = Union[
         (async_dictionary_client, dict),
     ],
 )
-async def test_async_get_user(client: AsyncClientType, response_type):
+async def test_async_get_user(client, response_type):
     user = await client.get_user(1)
     assert isinstance(user, response_type)
     if isinstance(user, dict):
@@ -52,7 +47,7 @@ async def test_async_get_user(client: AsyncClientType, response_type):
         (async_dictionary_client, dict),
     ],
 )
-async def test_async_get_users(client: AsyncClientType, response_type):
+async def test_async_get_users(client, response_type):
     users = await client.get_users()
     assert isinstance(users, response_type)
     if isinstance(users, dict):
@@ -86,7 +81,7 @@ async def test_async_get_users(client: AsyncClientType, response_type):
         ),
     ],
 )
-async def test_async_create_user(client: AsyncClientType, body, response_type):
+async def test_async_create_user(client, body, response_type):
     user = await client.create_user(user=body)
     assert isinstance(user, response_type)
     if isinstance(user, dict):
@@ -120,7 +115,7 @@ async def test_async_create_user(client: AsyncClientType, body, response_type):
         (async_dictionary_client, dict),
     ],
 )
-async def test_async_update_user(client: AsyncClientType, response_type):
+async def test_async_update_user(client, response_type):
     user = await client.update_user(user_id=1, name="John", job="worker")
     assert isinstance(user, response_type)
     if isinstance(user, dict):
@@ -138,7 +133,7 @@ async def test_async_update_user(client: AsyncClientType, response_type):
         async_dictionary_client,
     ],
 )
-async def test_async_delete_user(client: AsyncClientType):
+async def test_async_delete_user(client):
     response = await client.delete_user(1)
     assert isinstance(response, httpx.Response)
     assert response.status_code == 204
@@ -154,7 +149,7 @@ async def test_async_delete_user(client: AsyncClientType):
     ],
 )
 async def test_async_get_resources_list(
-    client: AsyncClientType, response_type
+    client, response_type
 ):
     resources = await client.get_resources()
     assert isinstance(resources, response_type)
@@ -178,7 +173,7 @@ async def test_async_get_resources_list(
     ],
 )
 async def test_async_get_resource(
-    client: AsyncClientType, response_type, resource_type
+    client, response_type, resource_type
 ):
     resource = await client.get_resource(1)
     assert isinstance(resource, response_type)
@@ -209,7 +204,7 @@ async def test_async_get_resource(
     ],
 )
 async def test_async_register(
-    client: AsyncClientType, response_type, error_type
+    client, response_type, error_type
 ):
     user = await client.register(
         user={"email": "eve.holt@reqres.in", "password": "q1w2e3r4t5y6"}

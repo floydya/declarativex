@@ -77,3 +77,12 @@ class HTTPException(DeclarativeException):
         if self._model:
             return parse_obj_as(self._model, response)
         return response
+
+
+class UnprocessableEntityException(DeclarativeException):
+    def __init__(self, response: httpx.Response):
+        self.response = response
+        super().__init__(
+            f"Failed to parse response. Status code: {response.status_code}. "
+            "You can access the raw response using the `response` attribute."
+        )

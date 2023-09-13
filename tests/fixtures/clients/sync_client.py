@@ -10,7 +10,6 @@ from src.declarativex import (
 )
 from tests.fixtures.schemas import dataclass, pydantic
 
-
 sync_dataclass_client = None
 sync_pydantic_client = None
 sync_dictionary_client = None
