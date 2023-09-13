@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - '*'
+    branches:
+      - main
 
 jobs:
   flake8:
@@ -89,6 +91,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        if: startsWith(github.ref, 'refs/tags/')
       - name: Install Poetry
         run: pipx install poetry
       - name: Set up Python
