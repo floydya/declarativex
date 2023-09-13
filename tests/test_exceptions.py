@@ -7,6 +7,7 @@ from src.declarativex.dependencies import Empty
 from src.declarativex.exceptions import (
     DependencyValidationError,
     MisconfiguredException,
+    UnprocessableEntityException,
 )
 from src.declarativex.warnings import DeclarativeWarning
 
@@ -143,6 +144,7 @@ def test_endpoint_default_empty_value():
     @http("get", "/posts", base_url="https://jsonplaceholder.typicode.com/")
     def get_posts(userId) -> List[dict]:
         pass
+
     with pytest.warns(DeclarativeWarning):
         assert len(get_posts(...)) == 100
 
@@ -161,4 +163,18 @@ def test_get_endpoint_with_json_in_args(dependency):
     assert (
         "BodyField and Json fields are not supported for GET requests"
         == str(exc.value)
+    )
+
+
+def test_unprocessable_entity_exception():
+    @http("get", "/", base_url="https://jsonplaceholder.typicode.com/")
+    def get_data() -> dict:
+        pass
+
+    with pytest.raises(UnprocessableEntityException) as exc:
+        get_data()
+
+    assert str(exc.value) == (
+        "Failed to parse response. Status code: 200. "
+        "You can access the raw response using the `response` attribute."
     )

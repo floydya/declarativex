@@ -131,6 +131,7 @@ def test_sync_delete_user(client):
     response = client.delete_user(1)
     assert isinstance(response, httpx.Response)
     assert response.status_code == 204
+    assert response.text == ""
 
 
 @pytest.mark.parametrize(

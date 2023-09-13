@@ -1,5 +1,6 @@
 import dataclasses
 import inspect
+from json import JSONDecodeError
 from typing import (
     Any,
     Callable,
@@ -18,7 +19,7 @@ import httpx
 from .client import BaseClient
 from .compatibility import parse_obj_as
 from .dependencies import RequestModifier
-from .exceptions import MisconfiguredException
+from .exceptions import MisconfiguredException, UnprocessableEntityException
 from .middlewares import AsyncMiddleware, Middleware
 from .utils import ReturnType, SUPPORTED_METHODS
 from .warnings import warn_list_return_type
@@ -37,9 +38,14 @@ class Response:
 
     def as_type(self, type_hint: Type):
         self.response.raise_for_status()
-        if type_hint is None:
+        if type_hint is None or type_hint is inspect.Signature.empty:
             return self.response
-        raw_response = self.response.json()
+        try:
+            raw_response = self.response.json()
+        except JSONDecodeError as e:
+            raise UnprocessableEntityException(
+                response=self.response
+            ) from e
         is_list = self.__is_list_of_objects(type_hint)
         if isinstance(raw_response, list) and not is_list:
             warn_list_return_type(type_hint)
