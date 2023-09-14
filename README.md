@@ -1,41 +1,42 @@
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/declarativex?style=for-the-badge&logo=python&logoColor=FF0077&color=FFD43B)](https://pypi.org/project/declarativex)
 [![PyPI - Downloads](https://img.shields.io/pypi/dw/declarativex?style=for-the-badge&link=https%3A%2F%2Fpypi.org%2Fproject%2Fdeclarativex&color=FFD43B&logoColor=FF0077&logo=ownCloud)](https://pypi.org/project/declarativex)
-[![PyPI - Version](https://img.shields.io/pypi/v/declarativex?style=for-the-badge&logo=pypi&color=FFD43B&logoColor=FF0077)](https://pypi.org/project/declarativex)
 [![Coverage](https://img.shields.io/badge/COVERAGE-100%25-FFD43B?style=for-the-badge&logo=codecov)](https://pypi.org/project/declarativex)
 
 
-# DeclarativeX - Declarative HTTP Client
+# DeclarativeX: Your Declarative HTTP Client 🚀
 
-## Why DeclarativeX? 🤔
+## Why Choose DeclarativeX? 🤷‍♂️
 
-Tired of spelling out each HTTP step? Headers, JSON parsing, the whole shebang? Chill, `DeclarativeX` is here to
-simplify your life. Now you can focus on what actually matters — your business logic.
+Sick of writing boilerplate for every HTTP request? Headers, JSON parsing, and all that jazz? 
 
-## Key Features 🗝️
+Say hello to `DeclarativeX`. 
 
-- **Declarative Syntax**: Just slap on some decorators, and you're good to go.
-- **Function-based Declaration**: Don't want to create a class? No problem, check the docs.
-- **Data Validation**: Got Pydantic? We've got your back on robust data validation.
-- **Async Support**: Async you said? Yep, we're all in.
-- **Rate limiting**: Don't want to get banned? We've got you covered.
-- **Middlewares**: Need to add some custom logic? Specify your custom middleware.
-- **Automatic body parsing**: Don't want to parse the response manually? Provide a dataclass or Pydantic model as return type.
+We handle the nitty-gritty so you can focus on what really counts—your core logic.
 
-## How to Get It 🛠
+## 🌟 Key Features
+
+- **Declarative Goodness**: Decorators make your life easy. Just add and go!
+- **Function Over Form**: No need for classes. Check the docs for function-based setups.
+- **Data Validation**: Using Pydantic? We've got your robust validation needs covered.
+- **Async Ready**: Need it fast? We're async-compatible.
+- **Rate Limiting**: Stay on the good side of APIs with built-in rate limiting.
+- **Middleware Support**: Add your custom logic with ease.
+- **Auto Body Parsing**: Skip manual parsing. Use a dataclass or Pydantic model for auto-magic.
+
+## Installation 🛠️
 
 ```bash
 pip install declarativex
 ```
 
-## Documentation 📚
+## Docs 📖
 
-Documentation is available at [https://floydya.github.io/declarativex](https://floydya.github.io/declarativex).
+Find all the details at [https://floydya.github.io/declarativex](https://floydya.github.io/declarativex).
 
-## Support the Creator 🙌
+## Show Some Love ❤️
 
-If you're digging DeclarativeX and want to give back, consider supporting the creator. Your contributions help keep this
-project alive and kicking!
+Every contribution counts and is super appreciated! 🙏
+
+Liking what you see? Support the creator to keep this project thriving.
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/E1E2OL196)
-
-Every bit helps and is massively appreciated! 🌟
