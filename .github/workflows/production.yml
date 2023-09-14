@@ -85,13 +85,13 @@ jobs:
         run: poetry run pytest -n 6 tests/
 
   build-and-publish:
+    if: startsWith(github.ref, 'refs/tags/')
     needs: [flake8, pylint, mypy, pytest]
     runs-on: ubuntu-latest
     environment: production
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        if: startsWith(github.ref, 'refs/tags/')
       - name: Install Poetry
         run: pipx install poetry
       - name: Set up Python
