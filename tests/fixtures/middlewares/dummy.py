@@ -1,9 +1,9 @@
-from src.declarativex.middlewares import (
+from declarativex.middlewares import (
     Middleware,
     AsyncMiddleware,
     ReturnType,
 )
-from src.declarativex.models import RawRequest
+from declarativex.models import RawRequest
 
 
 class SyncDummyMiddleware(Middleware):

@@ -4,7 +4,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from src.declarativex import declare
+from declarativex import declare
 
 
 @dataclasses.dataclass

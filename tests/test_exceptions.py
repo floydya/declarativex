@@ -2,14 +2,14 @@ from typing import Annotated, List, Optional, Union, get_args
 
 import pytest
 
-from src.declarativex import http, BaseClient, Query, Json, JsonField
-from src.declarativex.exceptions import (
+from declarativex import http, BaseClient, Query, Json, JsonField
+from declarativex.exceptions import (
     AnnotationException,
     DependencyValidationError,
     MisconfiguredException,
     UnprocessableEntityException,
 )
-from src.declarativex.warnings import DeclarativeWarning
+from declarativex.warnings import DeclarativeWarning
 
 
 def test_class_without_base_url():

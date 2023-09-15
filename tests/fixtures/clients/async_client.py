@@ -1,6 +1,7 @@
-from typing import TypeAlias, Union
+from typing import Annotated
+from typing import Union
 
-from src.declarativex import (
+from declarativex import (
     BaseClient,
     declare,
     JsonField,
@@ -13,29 +14,26 @@ from src.declarativex import (
 )
 from tests.fixtures.schemas import dataclass, pydantic
 
-from typing import Annotated
-
-
 async_dataclass_client = None
 async_pydantic_client = None
 async_dictionary_client = None
 
 
 for schema in [dataclass, pydantic, None]:
-    UserResponseSchema: TypeAlias = schema.SingleResponse[schema.User] if schema else dict
-    UserListResponseSchema: TypeAlias = (
+    UserResponseSchema = schema.SingleResponse[schema.User] if schema else dict
+    UserListResponseSchema = (
         schema.PaginatedResponse[schema.User] if schema else dict
     )
-    CreateUserSchema: TypeAlias = schema.BaseUserSchema if schema else Union[dict, str]
-    CreateUserResponseSchema: TypeAlias = schema.UserCreateResponse if schema else dict
-    UpdateUserResponseSchema: TypeAlias = schema.UserUpdateResponse if schema else dict
-    ResourcesListResponseSchema: TypeAlias = (
+    CreateUserSchema = schema.BaseUserSchema if schema else Union[dict, str]
+    CreateUserResponseSchema = schema.UserCreateResponse if schema else dict
+    UpdateUserResponseSchema = schema.UserUpdateResponse if schema else dict
+    ResourcesListResponseSchema = (
         schema.PaginatedResponse[schema.AnyResource] if schema else dict
     )
-    ResourceResponseSchema: TypeAlias = (
+    ResourceResponseSchema = (
         schema.SingleResponse[schema.AnyResource] if schema else dict
     )
-    RegisterResponseSchema: TypeAlias = schema.RegisterResponse if schema else dict
+    RegisterResponseSchema = schema.RegisterResponse if schema else dict
 
     class AsyncClientPydantic(BaseClient):
         base_url = "https://reqres.in/"

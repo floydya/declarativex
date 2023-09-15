@@ -6,7 +6,7 @@ from json import JSONDecodeError
 import httpx
 import pytest
 
-from src.declarativex.exceptions import (
+from declarativex.exceptions import (
     DependencyValidationError,
     HTTPException,
     TimeoutException,
