@@ -9,7 +9,7 @@
 
 Sick of writing boilerplate for every HTTP request? Headers, JSON parsing, and all that jazz? 
 
-Say hello to `DeclarativeX`. 
+Say hello to `DeclarativeX`! 
 
 We handle the nitty-gritty so you can focus on what really counts—your core logic.
 
