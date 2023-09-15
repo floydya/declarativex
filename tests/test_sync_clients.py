@@ -5,7 +5,7 @@ from json import JSONDecodeError
 import httpx
 import pytest
 
-from src.declarativex.exceptions import (
+from declarativex.exceptions import (
     DependencyValidationError,
     HTTPException,
     TimeoutException,
@@ -34,6 +34,11 @@ def test_sync_get_user(client, response_type):
         assert user.get("data").get("id") == 1
     else:
         assert user.data.id == 1
+
+    with pytest.raises(TimeoutException):
+        _ = client.get_user(1, delay=3)
+
+    _ = client.get_user(1, delay=2, timeout=3.0)
 
 
 @pytest.mark.parametrize(
@@ -163,9 +168,7 @@ def test_sync_get_resources_list(client, response_type):
         (sync_dictionary_client, dict, dict),
     ],
 )
-def test_sync_get_resource(
-    client, response_type, resource_type
-):
+def test_sync_get_resource(client, response_type, resource_type):
     resource = client.get_resource(1)
     assert isinstance(resource, response_type)
     if isinstance(resource, dict):
@@ -190,12 +193,13 @@ def test_sync_get_resource(
             pydantic.RegisterResponse,
             pydantic.RegisterBadRequestResponse,
         ),
-        (sync_dictionary_client, dict, dict),
+        (sync_dictionary_client, dict, httpx.Response),
     ],
 )
 def test_sync_register(client, response_type, error_type):
     user = client.register(
-        user={"email": "eve.holt@reqres.in", "password": "q1w2e3r4t5y6"}
+        user={"email": "eve.holt@reqres.in", "password": "q1w2e3r4t5y6"},
+        auth="Bearer test",
     )
     assert isinstance(user, response_type)
     if isinstance(user, dict):
@@ -207,13 +211,16 @@ def test_sync_register(client, response_type, error_type):
 
     with pytest.raises(HTTPException) as exc:
         _ = client.register(
-            user={"email": "test@testemail.com", "password": "q1w2e3r4t5y6"}
+            user={"email": "test@testemail.com", "password": "q1w2e3r4t5y6"},
+            auth="Bearer test",
         )
 
     assert isinstance(exc.value.response, error_type)
+    assert "authorization" in exc.value.raw_request.headers
+    assert exc.value.raw_request.headers["authorization"] == "Bearer test"
     assert exc.value.status_code == 400
-    if error_type is dict:
-        assert exc.value.response.get("error") == (
+    if error_type is httpx.Response:
+        assert exc.value.response.json().get("error") == (
             "Note: Only defined users succeed registration"
         )
     else:

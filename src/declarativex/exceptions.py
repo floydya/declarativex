@@ -10,15 +10,36 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class DeclarativeException(Exception):
-    pass
+    """Base class for all declarativex exceptions."""
 
 
 class MisconfiguredException(DeclarativeException):
-    pass
+    """Raised when a client is misconfigured."""
+
+
+class AnnotationException(MisconfiguredException):
+    """
+    Raised when an unsupported annotation is used.
+
+    Parameters:
+        annotation(`Type`): The annotation that was used.
+    """
+    def __init__(self, annotation: Type):
+        super().__init__(
+            f"Annotation {annotation} is not supported. "
+            "Use Annotated[type, Dependency] instead."
+        )
 
 
 class DependencyValidationError(DeclarativeException):
+    """
+    Raised when a dependency cannot be validated.
 
+    Parameters:
+        expected_type(`Union[Type, Sequence[Type]]`):
+            The dependency that failed validation.
+        received_type(`Type`): The type that was received.
+    """
     @classmethod
     def _name_accessor(cls, entity: Any) -> str:  # pragma: no cover
         if hasattr(entity, "__name__"):
@@ -52,6 +73,13 @@ class DependencyValidationError(DeclarativeException):
 
 
 class TimeoutException(DeclarativeException):
+    """
+    Raised when a request times out.
+
+    Parameters:
+        timeout(`Optional[float]`): The timeout in seconds.
+        request(`httpx.Request`): The request that timed out.
+    """
     def __init__(self, timeout: Union[float, None], request: httpx.Request):
         super().__init__(
             f"Request timed out after {timeout} seconds: "
@@ -60,6 +88,21 @@ class TimeoutException(DeclarativeException):
 
 
 class HTTPException(DeclarativeException):
+    """
+    Raised when a request fails with HTTP status code.
+
+    Parameters:
+        request(`httpx.Request`): The request that failed.
+        response(`httpx.Response`): The response that was received.
+        raw_request(`RawRequest`): The raw request that was sent.
+        error_mappings(`Mapping[int, Type]`):
+            A mapping of status codes to error models.
+    """
+    raw_request: "RawRequest"
+    status_code: int
+    _response: httpx.Response
+    _model: Optional[Type] = None
+
     def __init__(
         self,
         request: httpx.Request,
@@ -67,14 +110,11 @@ class HTTPException(DeclarativeException):
         raw_request: "RawRequest",
         error_mappings: Optional[Mapping[int, Type]] = None,
     ):
-        self.request = request
         self.raw_request = raw_request
         self._response = response
-        self.__error_mappings = error_mappings or {}
-        self._model = None
         self.status_code = response.status_code
-        if response.status_code in self.__error_mappings:
-            self._model = self.__error_mappings[response.status_code]
+        if error_mappings and response.status_code in error_mappings:
+            self._model = error_mappings[response.status_code]
         super().__init__(
             f"Request failed with status code {response.status_code}: "
             f"{request.method} {request.url}"
@@ -82,16 +122,38 @@ class HTTPException(DeclarativeException):
 
     @property
     def response(self):
-        response = self._response.json()
+        """
+        The response that was received. If a model is specified, the response
+        will be parsed and returned as an instance of that model.
+        :return: httpx.Response or Instance of self._model
+        """
+        response = self._response
         if self._model:
-            return parse_obj_as(self._model, response)
+            return parse_obj_as(self._model, response.json())
         return response
 
 
 class UnprocessableEntityException(DeclarativeException):
+    """
+    Raised when a request fails when parsing of the response fails.
+
+    Parameters:
+        response(`httpx.Response`): The response that was received.
+    """
     def __init__(self, response: httpx.Response):
         self.response = response
         super().__init__(
             f"Failed to parse response. Status code: {response.status_code}. "
             "You can access the raw response using the `response` attribute."
         )
+
+
+__all__ = [
+    "DeclarativeException",
+    "MisconfiguredException",
+    "AnnotationException",
+    "DependencyValidationError",
+    "TimeoutException",
+    "HTTPException",
+    "UnprocessableEntityException",
+]

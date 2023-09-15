@@ -2,8 +2,8 @@ from typing import List
 
 import pytest
 
-from src.declarativex import BaseClient, http
-from src.declarativex.exceptions import MisconfiguredException
+from declarativex import BaseClient, http
+from declarativex.exceptions import MisconfiguredException
 from .fixtures.middlewares.dummy import (
     SyncDummyMiddleware,
     AsyncDummyMiddleware,

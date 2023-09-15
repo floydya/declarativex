@@ -3,7 +3,10 @@ import warnings
 from typing import Generic, List, TypeVar
 
 from pydantic import BaseModel, AnyHttpUrl
-from pydantic.generics import GenericModel
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    from pydantic.generics import GenericModel
 
 AnyModel = TypeVar("AnyModel", bound=BaseModel)
 

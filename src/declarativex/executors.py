@@ -47,7 +47,7 @@ class Executor(abc.ABC):
         return kwargs, self_, cls_
 
     @abc.abstractmethod
-    def wait_for(self, func, **kwargs):
+    def wait_for(self, func: Callable, request: httpx.Request):
         """
         This method is used to wait for a function to finish, especially
         for timeout handling.
@@ -138,25 +138,29 @@ class Executor(abc.ABC):
 
 
 class AsyncExecutor(Executor):
-    async def wait_for(self, func, **kwargs):
+    async def wait_for(self, func: Callable, request: httpx.Request):
         """
         This method is used to wait for a function to finish, especially
         for timeout handling. It uses asyncio.wait_for to wait for the
         function to finish. Due to httpx timeouts not working properly,
         this method is used to handle it.
         """
-        if self.endpoint_configuration.timeout:
+        timeout = (
+            self.raw_request.timeout or self.endpoint_configuration.timeout
+        )
+
+        if timeout:
             try:
                 return await wait_for(
-                    func(**kwargs),
-                    timeout=self.endpoint_configuration.timeout,
+                    func(request),
+                    timeout=timeout,
                 )
             except (TimeoutError, CancelledError, AsyncioTimeoutError) as e:
                 raise TimeoutException(
-                    timeout=self.endpoint_configuration.timeout,
-                    **kwargs,
+                    timeout=timeout,
+                    request=request,
                 ) from e
-        return await func(**kwargs)
+        return await func(request)
 
     async def apply_request_middlewares(self, func, **kwargs) -> None:
         for middleware in self._middlewares:
@@ -203,32 +207,36 @@ class AsyncExecutor(Executor):
 
 
 class SyncExecutor(Executor):
-    def wait_for(self, func, **kwargs):
+    def wait_for(self, func: Callable, request: httpx.Request):
         """
         This method is used to wait for a function to finish, especially
         for timeout handling. It uses threading to wait for the function
         to finish. Due to httpx timeouts not working properly, this
         method is used to handle it.
         """
-        if self.endpoint_configuration.timeout:
-            queue = Queue()
+        timeout = (
+            self.raw_request.timeout or self.endpoint_configuration.timeout
+        )
+
+        if timeout:
+            queue: Queue = Queue()
 
             def wrapper():
-                result = func(**kwargs)
+                result = func(request)
                 queue.put(result)
 
             thread = threading.Thread(target=wrapper)
             thread.start()
 
             try:
-                return queue.get(timeout=self.endpoint_configuration.timeout)
+                return queue.get(timeout=timeout)
             except Empty:
                 thread.join()
                 raise TimeoutException(
-                    timeout=self.endpoint_configuration.timeout,
-                    **kwargs,
+                    timeout=timeout,
+                    request=request,
                 )
-        return func(**kwargs)
+        return func(request)
 
     def apply_request_middlewares(self, func, **kwargs) -> None:
         for middleware in self._middlewares:
