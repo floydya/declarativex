@@ -60,6 +60,7 @@ def http(
                     endpoint_configuration=endpoint_configuration
                 ).execute(func, *args, **kwargs)
 
+        setattr(inner, "_declarativex", True)
         inner.__annotations__["return"] = (
             inspect.signature(func).return_annotation
         )

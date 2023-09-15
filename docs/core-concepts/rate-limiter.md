@@ -76,32 +76,44 @@ Use it to prevent your client from being banned by the server.
 
 It supports both sync and async declarations.
 
-### Syntax
+## Syntax
 
-```python
-@rate_limiter(max_calls, interval)
-@http(...)
-def method_name() -> dict:
-    ...
-```
+=== "Per endpoint"
+    ```python hl_lines="3"
+    from declarativex import http, rate_limiter
 
-### Parameters
+    @rate_limiter(max_calls, interval)
+    @http(...)
+    def method_name() -> dict:
+        ...
+    ```
+
+    !!! info
+        It will be applied to the decorated endpoint. The bucket will be bounded to it. Only this function will consume bucket tokens.
+
+
+=== "Per client"
+    ```python hl_lines="4"
+    from declarativex import http, rate_limiter, BaseClient
+
+
+    @rate_limiter(max_calls, interval)
+    class MyClient(BaseClient):
+        base_url = "https://api.example.com"
+
+        @http("GET", "/users")
+        def get_users(self) -> dict:
+            ...
+
+        @http("GET", "/users/{user_id}")
+        def get_user(self, user_id: int) -> dict:
+            ...
+    ```
+
+    !!! info
+        It will be applied to all endpoints of the client. The bucket will be shared. Every endpoint will consume tokens from the same bucket.
+
+## Parameters
 
 - `max_calls` - maximum number of calls to the endpoint
 - `interval` - interval between calls in seconds
-
-!!! note "Rate limit"
-    The rate limit is applied to the endpoint, not to the client.
-
-
-### Example
-```.python title="my_client.py"
-from declarativex import http, rate_limiter
-
-
-@rate_limiter(max_calls=10, interval=60)
-@http("GET", "/users/{user_id}")
-def get_user(user_id: int) -> dict:
-    ...
-
-```

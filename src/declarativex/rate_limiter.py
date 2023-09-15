@@ -1,79 +1,122 @@
 import asyncio
 import time
 from functools import wraps
-from typing import TypeVar, Callable
+from typing import TypeVar, Callable, Union, Awaitable
 
 ReturnType = TypeVar("ReturnType")
 
 
-def rate_limiter(
-    max_calls: float, interval: float
-) -> Callable[..., ReturnType]:
-    """
-    Rate-limits the decorated function locally, for one process.
-    Using Token Bucket algorithm.
-        - max_calls: maximum number of calls of function in interval
-        - interval: interval in [s]
-    """
+class Bucket:
+    token_fill_rate: float
+    last_time_token_added: float
+    token_bucket: float
 
-    token_fill_rate: float = max_calls / interval
+    def __init__(self, max_calls: float, interval: float):
+        self._max_calls = max_calls
+        self._interval = interval
 
-    def decorate(func):
-        last_time_token_added = time.perf_counter()
-        token_bucket = max_calls
+        self.token_fill_rate = max_calls / interval
+        self.last_time_token_added = 0.0
+        self.token_bucket = max_calls
 
-        @wraps(func)
-        async def async_rate_limited_function(*args, **kwargs):
-            nonlocal last_time_token_added
-            nonlocal token_bucket
+    @property
+    def max_calls(self):
+        return self._max_calls
+
+    def refill(self):
+        self.token_bucket = self._max_calls
+        self.last_time_token_added = 0.0
+
+
+class rate_limiter:
+    def __init__(self, max_calls: int, interval: float):
+        self._bucket = Bucket(max_calls, interval)
+        self.lock = asyncio.Lock()
+
+    async def decorate_async(
+        self, func: Callable[..., Awaitable[ReturnType]], *args, **kwargs
+    ) -> ReturnType:
+        async with self.lock:
             try:
-                elapsed = time.perf_counter() - last_time_token_added
-                # refill token_bucket to a maximum of max_calls
-                token_bucket = min(
-                    token_bucket + elapsed * token_fill_rate, max_calls
+                elapsed = (
+                    asyncio.get_event_loop().time()
+                    - self._bucket.last_time_token_added
                 )
-                last_time_token_added = time.perf_counter()
+                self._bucket.token_bucket = min(
+                    self._bucket.token_bucket
+                    + elapsed * self._bucket.token_fill_rate,
+                    self._bucket.max_calls,
+                )
+                self._bucket.last_time_token_added = (
+                    asyncio.get_event_loop().time()
+                )
 
                 # check if we have to wait for a function call
                 # (min 1 token in order to make a call)
-                if token_bucket < 1.0:
-                    left_to_wait = (1 - token_bucket) / token_fill_rate
+                if self._bucket.token_bucket < 1.0:
+                    left_to_wait = (
+                        1 - self._bucket.token_bucket
+                    ) / self._bucket.token_fill_rate
                     await asyncio.sleep(left_to_wait)
 
                 return await func(*args, **kwargs)
             finally:
                 # for every call we can consume one token,
                 # if the bucket is empty, we have to wait
-                token_bucket -= 1.0
+                self._bucket.token_bucket -= 1.0
 
-        @wraps(func)
-        def sync_rate_limited_function(*args, **kwargs):
-            nonlocal last_time_token_added
-            nonlocal token_bucket
-            try:
-                elapsed = time.perf_counter() - last_time_token_added
-                # refill token_bucket to a maximum of max_calls
-                token_bucket = min(
-                    token_bucket + elapsed * token_fill_rate, max_calls
+    def decorate_sync(
+        self, func: Callable[..., ReturnType], *args, **kwargs
+    ) -> ReturnType:
+        try:
+            elapsed = time.perf_counter() - self._bucket.last_time_token_added
+            self._bucket.token_bucket = min(
+                self._bucket.token_bucket
+                + elapsed * self._bucket.token_fill_rate,
+                self._bucket.max_calls,
+            )
+            self._bucket.last_time_token_added = time.perf_counter()
+
+            # check if we have to wait for a function call
+            # (min 1 token in order to make a call)
+            if self._bucket.token_bucket < 1.0:
+                left_to_wait = (
+                    1 - self._bucket.token_bucket
+                ) / self._bucket.token_fill_rate
+                time.sleep(left_to_wait)
+
+            return func(*args, **kwargs)
+        finally:
+            # for every call we can consume one token,
+            # if the bucket is empty, we have to wait
+            self._bucket.token_bucket -= 1.0
+
+    def decorate_class(self, cls: type) -> type:
+        for attr_name, attr_value in cls.__dict__.items():
+            if hasattr(attr_value, "_declarativex"):
+                setattr(cls, attr_name, self(attr_value))
+        setattr(cls, "_rate_limiter_bucket", self._bucket)
+        return cls
+
+    def __call__(
+        self, func_or_class: Union[Callable[..., ReturnType], type]
+    ) -> Union[Callable[..., ReturnType], type]:
+        if isinstance(func_or_class, type):
+            return self.decorate_class(func_or_class)
+
+        if asyncio.iscoroutinefunction(func_or_class):
+
+            @wraps(func_or_class)
+            async def inner(*args, **kwargs):
+                return await self.decorate_async(
+                    func_or_class, *args, **kwargs
                 )
-                last_time_token_added = time.perf_counter()
 
-                # check if we have to wait for a function call
-                # (min 1 token in order to make a call)
-                if token_bucket < 1.0:
-                    left_to_wait = (1 - token_bucket) / token_fill_rate
-                    time.sleep(left_to_wait)
+        else:
 
-                return func(*args, **kwargs)
-            finally:
-                # for every call we can consume one token,
-                # if the bucket is empty, we have to wait
-                token_bucket -= 1.0
+            @wraps(func_or_class)
+            def inner(*args, **kwargs):
+                return self.decorate_sync(func_or_class, *args, **kwargs)
 
-        return (
-            async_rate_limited_function
-            if asyncio.iscoroutinefunction(func)
-            else sync_rate_limited_function
-        )
-
-    return decorate
+        setattr(inner, "_rate_limiter_bucket", self._bucket)
+        return inner
