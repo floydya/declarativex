@@ -18,8 +18,6 @@ class MyClient(BaseClient):
 
 That's it! You've just created your first `BaseClient`. 🎉
 
-## {!core-concepts/_declare-parameters.md!}
-
 ## Attributes
 
 ### `base_url`
@@ -217,9 +215,64 @@ Middlewares are a powerful tool that allows you to modify requests and responses
     They are covered in detail in the [Middlewares](./middlewares.md) section.
 
 
+### `error_mappings`
+
+Error mappings are a powerful tool that allows you to map HTTP status codes to response parser.
+
+You can use `pydantic.BaseModel`, `dataclass` or `TypedDict` to parse the response.
+
+=== "Using class attribute"
+    ```{.python title="my_client.py"}
+    from declarativex import BaseClient
+    from pydantic import BaseModel
+
+    from myapp.middlewares import MyMiddleware
+
+
+    class BadRequestResponseSchema(BaseModel):
+        message: str
+
+
+    class MyClient(BaseClient):
+        base_url = "https://api.example.com"
+        error_mappings = {
+            400: BadRequestResponseSchema
+        }
+
+
+    client = MyClient()
+    ```
+
+=== "Using __init__ argument"
+    ```{.python title="my_client.py"}
+    from declarativex import BaseClient
+    from pydantic import BaseModel
+
+    from myapp.middlewares import MyMiddleware
+
+
+    class BadRequestResponseSchema(BaseModel):
+        message: str
+
+
+    class MyClient(BaseClient):
+        pass
+
+
+    client = MyClient(
+        base_url="https://api.example.com",
+        error_mappings={400: BadRequestResponseSchema}
+    )
+    ```
+
+
+!!! tip
+    More information you can find in the [Error mappings](./error-mappings.md) section.
+
+
 ## Wrapping Up
 
 So there you have it, the `BaseClient` in all its glory. It's the cornerstone of DeclarativeX, designed to make your
 life easier and your code cleaner.
 
-Feel like diving deeper? Check out the [Declaration](./declaration.md) and [Dependencies](./dependencies.md) sections next.
+Feel like diving deeper? Check out the [HTTP Declaration](./http-declaration.md) and [Dependencies](./dependencies.md) sections next.

@@ -1,6 +1,6 @@
 .PHONY: test black flake8 pylint mypy pytest
 
-test: black flake8 pylint mypy pytest
+test: flake8 pylint mypy pytest
 
 black:
 	black .
@@ -15,4 +15,4 @@ mypy:
 	mypy src/declarativex
 
 pytest:
-	pytest .
+	pytest -n 6 tests/

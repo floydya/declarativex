@@ -1,10 +1,10 @@
-from typing import List, Optional, Union, get_args
+from typing import Annotated, List, Optional, Union, get_args
 
 import pytest
 
 from src.declarativex import http, BaseClient, Query, Json, JsonField
-from src.declarativex.dependencies import Empty
 from src.declarativex.exceptions import (
+    AnnotationException,
     DependencyValidationError,
     MisconfiguredException,
     UnprocessableEntityException,
@@ -77,7 +77,7 @@ def test_endpoint_with_wrong_parameters():
 
 def test_endpoint_wrong_type_hints():
     @http("GET", "/posts", base_url="https://jsonplaceholder.typicode.com/")
-    def get_posts(userId: int = Query()) -> dict:
+    def get_posts(userId: Annotated[int, Query]) -> dict:
         pass
 
     with pytest.raises(DependencyValidationError) as exc:
@@ -108,23 +108,10 @@ def test_endpoint_wrong_type_hints():
     assert len(result) == 10
 
     @http("GET", "/posts", base_url="https://jsonplaceholder.typicode.com/")
-    def get_posts(userId: Optional[int] = Query()) -> List[dict]:
+    def get_posts(userId: Annotated[int, Query] = 1) -> List[dict]:
         pass
 
-    with pytest.raises(DependencyValidationError) as exc:
-        get_posts()
-
-    assert str(
-        DependencyValidationError(
-            expected_type=get_args(Optional[int]), received_type=type(Empty)
-        )
-    ) == str(exc.value)
-
-    @http("GET", "/posts", base_url="https://jsonplaceholder.typicode.com/")
-    def get_posts(userId: Optional[int] = Query(default=1)) -> List[dict]:
-        pass
-
-    assert len(get_posts(None)) == 10
+    assert len(get_posts()) == 10
 
     @http("GET", "/posts", base_url="https://jsonplaceholder.typicode.com/")
     def get_posts(userId: Union[str, int]) -> List[dict]:
@@ -146,19 +133,19 @@ def test_endpoint_default_empty_value():
         pass
 
     with pytest.warns(DeclarativeWarning):
-        assert len(get_posts(...)) == 100
+        assert len(get_posts(...)) == 0
 
 
 @pytest.mark.parametrize("dependency", [JsonField, Json])
 def test_get_endpoint_with_json_in_args(dependency):
     @http("get", "/posts", base_url="https://jsonplaceholder.typicode.com/")
     def get_posts(
-        userId: Optional[int] = None, json: dict = dependency()
+        json: Annotated[dict, dependency], userId: Optional[int] = None,
     ) -> List[dict]:
         pass
 
     with pytest.raises(MisconfiguredException) as exc:
-        get_posts(1, {"test": "test"})
+        get_posts({"test": "test"}, 1)
 
     assert (
         "BodyField and Json fields are not supported for GET requests"
@@ -177,4 +164,18 @@ def test_unprocessable_entity_exception():
     assert str(exc.value) == (
         "Failed to parse response. Status code: 200. "
         "You can access the raw response using the `response` attribute."
+    )
+
+
+def test_annotation_exception():
+    @http("get", "/", base_url="https://jsonplaceholder.typicode.com/")
+    def get_data(userId: Annotated[int, "test"]) -> dict:
+        pass
+
+    with pytest.raises(AnnotationException) as exc:
+        get_data(1)
+
+    assert str(exc.value) == (
+        "Annotation typing.Annotated[int, 'test'] is not supported. "
+        "Use Annotated[type, Dependency] instead."
     )

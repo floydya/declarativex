@@ -7,11 +7,11 @@ in the right place. Let's break it down.
 
 ## Python Versions
 
-DeclarativeX is compatible with Python 3.8.1 and above. So, if you're still on Python 2 or Python 3.6 (why though?),
+DeclarativeX is compatible with Python 3.9 and above. So, if you're still on Python 2 or Python 3.6 (why though?),
 it's time to make the jump.
 
 !!! note "Python Version Support"
-    DeclarativeX is tested against Python `3.8`, `3.9`, `3.10` and `3.11`. 
+    DeclarativeX is tested against Python `3.9`, `3.10` and `3.11`. 
     Future versions will be supported as they're released.
 
 ## Pydantic Compatibility

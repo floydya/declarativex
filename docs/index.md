@@ -21,10 +21,10 @@ And boom! You're good to go.
 Ready to dive in? Here's a quick example to get you started:
 
 ```{.python title="my_client.py"}
-from declarativex import BaseClient, declare
+from declarativex import BaseClient, http
 
 
-@declare("GET", "/users/{user_id}", "https://example.com")
+@http("GET", "/users/{user_id}", "https://example.com")
 def get_user(user_id: int) -> dict:
     ...
 
@@ -54,7 +54,7 @@ See? No fuss, just clean and straightforward code.
 Feel free to explore the documentation to get a deeper understanding of DeclarativeX. Whether you're looking to understand the core concepts, decorators, or how to set up dependencies, we've got you covered.
 
 - [BaseClient](core-concepts/base-client.md)
-- [Declaration](core-concepts/declaration.md)
+- [HTTP Declaration](core-concepts/http-declaration.md)
 - [Dependencies](core-concepts/dependencies.md)
 - [Middlewares](core-concepts/middlewares.md)
 

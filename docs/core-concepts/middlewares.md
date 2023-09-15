@@ -17,7 +17,7 @@ You can use AsyncMiddleware only with async methods and SyncMiddleware only with
 
 !!! info
 
-    The [MisconfiguredException](./exceptions.md#misconfiguredexception) will be raised if you use the wrong type of middleware.
+    The [MisconfiguredException](../api/exceptions.md#misconfiguredexception) will be raised if you use the wrong type of middleware.
 
 Both of base classes implements `process_request` and `process_response` methods.
 !!! example
@@ -59,6 +59,6 @@ Both of base classes implements `process_request` and `process_response` methods
 You can set up your middlewares in two ways:
 
 - Using `middlewares` parameter in the `#!python BaseClient` constructor.
-- Using `middlewares` parameter in the `#!python @declare`.
+- Using `middlewares` parameter in the `#!python @http`.
 
 If both of them are specified, they will be merged for specific endpoint.
