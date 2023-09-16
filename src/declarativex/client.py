@@ -1,7 +1,7 @@
-from typing import Dict, Optional, Union, Sequence, Type
+from typing import Dict, Optional, Sequence, Type
 
 from .exceptions import MisconfiguredException
-from .middlewares import Middleware, AsyncMiddleware
+from .middlewares import Middleware
 
 
 class BaseClient:
@@ -19,7 +19,7 @@ class BaseClient:
     base_url: str = ""
     default_headers: Dict[str, str] = {}
     default_query_params: Dict[str, str] = {}
-    middlewares: Sequence[Union[Middleware, AsyncMiddleware]] = []
+    middlewares: Sequence[Middleware] = []
     error_mappings: Dict[int, Type] = {}
 
     def __init__(
@@ -27,9 +27,7 @@ class BaseClient:
         base_url: Optional[str] = None,
         default_headers: Optional[Dict[str, str]] = None,
         default_query_params: Optional[Dict[str, str]] = None,
-        middlewares: Optional[
-            Sequence[Union[Middleware, AsyncMiddleware]]
-        ] = None,
+        middlewares: Optional[Sequence[Middleware]] = None,
         error_mappings: Optional[Dict[int, Type]] = None,
     ) -> None:
         self.base_url = base_url or self.base_url

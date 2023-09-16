@@ -4,7 +4,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from declarativex import declare
+from declarativex import http
 
 
 @dataclasses.dataclass
@@ -18,7 +18,7 @@ class PostModel:
 PostList = List[PostModel]
 
 
-@declare("GET", "/posts", base_url="https://jsonplaceholder.typicode.com")
+@http("GET", "/posts", base_url="https://jsonplaceholder.typicode.com")
 def get_posts_dataclass() -> PostList:
     pass
 
@@ -40,11 +40,11 @@ if sys.version_info >= (3, 11):
     class AnyEntity(BaseModel):
         id: str
 
-    @declare("GET", "/posts", base_url="https://jsonplaceholder.typicode.com")
+    @http("GET", "/posts", base_url="https://jsonplaceholder.typicode.com")
     def get_posts() -> list[dict]:
         pass
 
-    @declare(
+    @http(
         "GET",
         "/posts/{post_id}",
         base_url="https://jsonplaceholder.typicode.com",
@@ -52,7 +52,7 @@ if sys.version_info >= (3, 11):
     def get_post(post_id: int) -> Post | AnyEntity:
         pass
 
-    @declare(
+    @http(
         "GET",
         "/posts/{post_id}",
         base_url="https://jsonplaceholder.typicode.com",

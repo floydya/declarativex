@@ -3,7 +3,6 @@ from typing import Union
 
 from declarativex import (
     BaseClient,
-    declare,
     JsonField,
     rate_limiter,
     Json,
@@ -11,6 +10,7 @@ from declarativex import (
     Timeout,
     Query,
     Header,
+    http,
 )
 from tests.fixtures.schemas import dataclass, pydantic
 
@@ -38,7 +38,7 @@ for schema in [dataclass, pydantic, None]:
     class AsyncClientPydantic(BaseClient):
         base_url = "https://reqres.in/"
 
-        @declare("GET", "api/users/{user_id}")
+        @http("GET", "api/users/{user_id}")
         async def get_user(
             self,
             user_id: Annotated[int, Path],
@@ -47,21 +47,21 @@ for schema in [dataclass, pydantic, None]:
         ) -> UserResponseSchema:
             ...
 
-        @declare("GET", "api/users", timeout=2)
+        @http("GET", "api/users", timeout=2)
         async def get_users(
             self, delay: Annotated[int, Query()] = 0
         ) -> UserListResponseSchema:
             ...
 
         @rate_limiter(max_calls=1, interval=1)
-        @declare("POST", "api/users")
+        @http("POST", "api/users")
         async def create_user(
             self,
             user: Annotated[CreateUserSchema, Json()],
         ) -> CreateUserResponseSchema:
             ...
 
-        @declare("PUT", "api/users/{user_id}")
+        @http("PUT", "api/users/{user_id}")
         async def update_user(
             self,
             user_id: int,
@@ -70,11 +70,11 @@ for schema in [dataclass, pydantic, None]:
         ) -> UpdateUserResponseSchema:
             ...
 
-        @declare("DELETE", "api/users/{user_id}")
+        @http("DELETE", "api/users/{user_id}")
         async def delete_user(self, user_id: int):
             ...
 
-        @declare("GET", "api/{resource}")
+        @http("GET", "api/{resource}")
         async def get_resources(
             self,
             resource_name: Annotated[
@@ -83,13 +83,13 @@ for schema in [dataclass, pydantic, None]:
         ) -> ResourcesListResponseSchema:
             ...
 
-        @declare("GET", "api/unknown/{resource_id}")
+        @http("GET", "api/unknown/{resource_id}")
         async def get_resource(
             self, resource_id: int
         ) -> ResourceResponseSchema:
             ...
 
-        @declare(
+        @http(
             "POST",
             "api/register",
             error_mappings={400: schema.RegisterBadRequestResponse}

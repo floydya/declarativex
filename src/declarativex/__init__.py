@@ -7,10 +7,8 @@ from .dependencies import (
     Header,
     Cookie,
     Timeout,
+    Dependency,
 )
-from .methods import declare, http
-from .middlewares import Middleware, AsyncMiddleware
-from .rate_limiter import rate_limiter
 from .exceptions import (
     DeclarativeException,
     MisconfiguredException,
@@ -20,5 +18,8 @@ from .exceptions import (
     TimeoutException,
     UnprocessableEntityException,
 )
+from .methods import http
+from .middlewares import Middleware
+from .rate_limiter import rate_limiter
 
 __version__ = "v1.0.0"

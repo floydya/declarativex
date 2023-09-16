@@ -9,7 +9,6 @@ from typing import (
     Optional,
     Sequence,
     Type,
-    Union,
     List,
     get_origin,
     TypeVar,
@@ -23,7 +22,7 @@ from .client import BaseClient
 from .compatibility import parse_obj_as
 from .dependencies import RequestModifier
 from .exceptions import MisconfiguredException, UnprocessableEntityException
-from .middlewares import AsyncMiddleware, Middleware
+from .middlewares import Middleware
 from .utils import ReturnType, SUPPORTED_METHODS
 from .warnings import warn_list_return_type
 
@@ -159,9 +158,7 @@ class ClientConfiguration:
         default_factory=dict
     )
     default_headers: Dict[str, str] = dataclasses.field(default_factory=dict)
-    middlewares: Sequence[
-        Union[Middleware, AsyncMiddleware]
-    ] = dataclasses.field(default_factory=list)
+    middlewares: Sequence[Middleware] = dataclasses.field(default_factory=list)
     error_mappings: Dict[int, Type] = dataclasses.field(default_factory=dict)
 
     def __post_init__(self):
@@ -316,11 +313,14 @@ class RawRequest:
             request=self, func=func, **values
         )
 
+    def url(self):
+        return self.url_template.format(**self.path_params)
+
     def to_httpx_request(self) -> httpx.Request:
         """Convert the request to a httpx.Request."""
         return httpx.Request(
             method=self.method,
-            url=self.url_template.format(**self.path_params),
+            url=self.url(),
             params=self.query_params,
             headers=self.headers,
             cookies=self.cookies,
