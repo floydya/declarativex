@@ -31,15 +31,16 @@ class Bucket:
 class rate_limiter:
     def __init__(self, max_calls: int, interval: float):
         self._bucket = Bucket(max_calls, interval)
-        self.lock = asyncio.Lock()
+        self._loop = asyncio.get_event_loop()
+        self._lock = asyncio.Lock()
 
     async def decorate_async(
         self, func: Callable[..., Awaitable[ReturnType]], *args, **kwargs
     ) -> ReturnType:
-        async with self.lock:
+        async with self._lock:
             try:
                 elapsed = (
-                    asyncio.get_event_loop().time()
+                    self._loop.time()
                     - self._bucket.last_time_token_added
                 )
                 self._bucket.token_bucket = min(
@@ -48,7 +49,7 @@ class rate_limiter:
                     self._bucket.max_calls,
                 )
                 self._bucket.last_time_token_added = (
-                    asyncio.get_event_loop().time()
+                    self._loop.time()
                 )
 
                 # check if we have to wait for a function call
