@@ -190,3 +190,24 @@ def create_baz(
 ) -> dict:
     ...
 ```
+
+
+## Timeout ⏱️
+
+You can define a changeable timeout using dependency:
+
+```.py title="my_client.py" hl_lines="1 8"
+from typing import Annotated
+
+from declarativex import http, Timeout
+
+
+@http("POST", "/bar")
+def create_baz(
+    timeout: Annotated[int, Timeout]
+) -> dict:
+    ...
+```
+
+!!! note
+    If you need to define a constant timeout, you can use `timeout` param in `@http` decorator.
