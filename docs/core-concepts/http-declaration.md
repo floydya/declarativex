@@ -88,9 +88,8 @@ The priority of the parameters is as follows:
 You can use any of the custom dataclasses, Pydantic models or built-in types to parse the response automatically.
 
 !!! warning "-> dict"
-    If you don't specify a return type, the decorator will return a `dict` object.
+    If you don't specify a return type, the decorator will return a `httpx.Response` object.
     But, your IDE will not be able to detect the type of the response, so it's recommended to specify the return type.
-    Corresponding warning will be shown at the runtime.
 
 
 ### Class-based declaration
@@ -122,7 +121,7 @@ my_client = MyClient()
 !!! danger "Class-based declaration"
     If you're using class-based declaration, you must pass `self` as the first argument to the method.
 
-    It will be used to get the `base_url`, `default_query_params` and `default_headers` values.
+    It will be used to get the `base_url`, `default_query_params`, `default_headers` and other values.
 
 
 ### Function-based declaration
