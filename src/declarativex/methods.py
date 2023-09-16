@@ -66,7 +66,3 @@ def http(
         return inner
 
     return wrapper
-
-
-# For backwards compatibility
-declare = http

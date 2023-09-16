@@ -147,8 +147,16 @@ def test_middleware_dont_call_client(mocker: MockerFixture):
 
     middleware = CacheMiddleware()
 
-    add = mocker.patch.object(CacheMiddleware, "add_to_cache", MagicMock(wraps=middleware.add_to_cache))
-    get = mocker.patch.object(CacheMiddleware, "get_from_cache", MagicMock(wraps=middleware.get_from_cache))
+    add = mocker.patch.object(
+        CacheMiddleware,
+        "add_to_cache",
+        MagicMock(wraps=middleware.add_to_cache),
+    )
+    get = mocker.patch.object(
+        CacheMiddleware,
+        "get_from_cache",
+        MagicMock(wraps=middleware.get_from_cache),
+    )
 
     @http(
         "GET",

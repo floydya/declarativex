@@ -7,6 +7,7 @@ from .dependencies import (
     Header,
     Cookie,
     Timeout,
+    Dependency,
 )
 from .exceptions import (
     DeclarativeException,
@@ -17,7 +18,7 @@ from .exceptions import (
     TimeoutException,
     UnprocessableEntityException,
 )
-from .methods import declare, http
+from .methods import http
 from .middlewares import Middleware
 from .rate_limiter import rate_limiter
 

@@ -128,6 +128,11 @@ class Executor(abc.ABC):
     def _chain_middlewares(
         self, execute: Callable[[RawRequest], ReturnType]
     ) -> ReturnType:
+        """
+        This method is used to chain the middlewares together. It uses
+        recursion to chain them together. The last middleware will call
+        the execute function.
+        """
         execute_func = execute
         for mw in reversed(self._middlewares):
 
