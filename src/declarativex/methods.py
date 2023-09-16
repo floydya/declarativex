@@ -7,12 +7,11 @@ from typing import (
     Dict,
     Optional,
     Type,
-    Union,
     Sequence,
 )
 
 from .executors import AsyncExecutor, SyncExecutor
-from .middlewares import Middleware, AsyncMiddleware
+from .middlewares import Middleware
 from .models import ClientConfiguration, EndpointConfiguration
 from .utils import ReturnType
 
@@ -25,7 +24,7 @@ def http(
     base_url: str = "",
     default_query_params: Optional[Dict[str, Any]] = None,
     default_headers: Optional[Dict[str, str]] = None,
-    middlewares: Optional[Sequence[Union[Middleware, AsyncMiddleware]]] = None,
+    middlewares: Optional[Sequence[Middleware]] = None,
     error_mappings: Optional[Dict[int, Type]] = None,
 ) -> Callable[..., ReturnType]:
     client_configuration = ClientConfiguration.create(

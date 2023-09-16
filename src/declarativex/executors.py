@@ -1,5 +1,6 @@
 # pylint: disable=invalid-overridden-method
 import abc
+import asyncio
 import inspect
 import threading
 from asyncio import (
@@ -25,20 +26,38 @@ from .utils import ReturnType
 
 class Executor(abc.ABC):
     raw_request: RawRequest
+    _func: Callable
 
     def __init__(self, endpoint_configuration: EndpointConfiguration):
         self.endpoint_configuration = endpoint_configuration
 
-    @staticmethod
+    @property
+    def func(self) -> Callable:
+        return self._func
+
+    @func.setter
+    def func(self, func: Callable) -> None:
+        for middleware in self._middlewares:
+            is_async = asyncio.iscoroutinefunction(func)
+            if getattr(middleware, "_async") is not is_async:
+                mw_type = ["sync", "async"]
+                raise MisconfiguredException(
+                    f"Cannot use {mw_type[not is_async]} middleware"
+                    f"({middleware.__class__.__name__}) with "
+                    f"{mw_type[is_async]} function"
+                )
+
+        self._func = func
+
     def merge_args_and_kwargs(
-        func, *args, **kwargs
+        self, *args, **kwargs
     ) -> Tuple[Dict[str, Any], Optional[BaseClient], Optional[BaseClient]]:
         """
         This method is used to merge args and kwargs into a single kwargs
         dictionary. It also returns the self and cls objects if they are
         present in the kwargs.
         """
-        signature = inspect.signature(func)
+        signature = inspect.signature(self.func)
         param_names = list(signature.parameters.keys())
         kwargs.update(dict(zip(param_names, args)))
         # Remove self and cls from kwargs, it will be used
@@ -47,7 +66,7 @@ class Executor(abc.ABC):
         return kwargs, self_, cls_
 
     @abc.abstractmethod
-    def wait_for(self, func: Callable, request: httpx.Request):
+    def wait_for(self, client, request: httpx.Request):
         """
         This method is used to wait for a function to finish, especially
         for timeout handling.
@@ -75,36 +94,29 @@ class Executor(abc.ABC):
                 client_configuration
             )
 
-    @abc.abstractmethod
-    def apply_request_middlewares(self, func, **kwargs):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def apply_response_middlewares(self, response):
-        raise NotImplementedError
-
-    def prepare_request(self, func, **kwargs) -> None:
+    def prepare_request(self, **kwargs) -> None:
         """
         This method is used to prepare the raw request.
         It also applies the middlewares to the raw request.
         """
         self.raw_request = RawRequest.initialize(
             self.endpoint_configuration
-        ).prepare(func, **kwargs)
+        ).prepare(self.func, **kwargs)
 
     def parse_response(
         self,
-        func: Callable[..., ReturnType],
         httpx_request: httpx.Request,
         httpx_response: httpx.Response,
-    ) -> ReturnType:
+    ):
         """
         This method is used to parse the httpx response into the
         return type of the function.
         It also applies the middlewares to the response.
         """
         try:
-            return Response(response=httpx_response).as_type_for_func(func)
+            return Response(response=httpx_response).as_type_for_func(
+                self.func
+            )
         except httpx.HTTPStatusError as e:
             raise HTTPException(
                 request=httpx_request,
@@ -113,11 +125,32 @@ class Executor(abc.ABC):
                 error_mappings=self._error_mappings,
             ) from e
 
+    def _chain_middlewares(
+        self, execute: Callable[[RawRequest], ReturnType]
+    ) -> ReturnType:
+        execute_func = execute
+        for mw in reversed(self._middlewares):
+
+            def wrap(middleware, prev_func):
+                def _wrapped(request: RawRequest):
+                    return middleware(request=request, call_next=prev_func)
+
+                return _wrapped
+
+            execute_func = wrap(mw, execute_func)
+        return execute_func(self.raw_request)
+
     def execute(self, func, *args, **kwargs):
-        return self._execute(func, *args, **kwargs)
+        self.func = func
+        kwargs, self_, cls_ = self.merge_args_and_kwargs(*args, **kwargs)
+        self.update_configuration(self_, cls_)
+        self.prepare_request(**kwargs)
+        if self._middlewares:
+            return self._chain_middlewares(self._execute)
+        return self._execute(self.raw_request)
 
     @abc.abstractmethod
-    def _execute(self, func, *args, **kwargs):
+    def _execute(self, request: RawRequest):
         raise NotImplementedError
 
     @property
@@ -138,7 +171,9 @@ class Executor(abc.ABC):
 
 
 class AsyncExecutor(Executor):
-    async def wait_for(self, func: Callable, request: httpx.Request):
+    async def wait_for(
+        self, client: httpx.AsyncClient, request: httpx.Request
+    ):
         """
         This method is used to wait for a function to finish, especially
         for timeout handling. It uses asyncio.wait_for to wait for the
@@ -152,7 +187,7 @@ class AsyncExecutor(Executor):
         if timeout:
             try:
                 return await wait_for(
-                    func(request),
+                    client.send(request),
                     timeout=timeout,
                 )
             except (TimeoutError, CancelledError, AsyncioTimeoutError) as e:
@@ -160,54 +195,22 @@ class AsyncExecutor(Executor):
                     timeout=timeout,
                     request=request,
                 ) from e
-        return await func(request)
+        return await client.send(request)
 
-    async def apply_request_middlewares(self, func, **kwargs) -> None:
-        for middleware in self._middlewares:
-            # Set function to be used in middleware
-            middleware.set_func(func)
-
-            # Modify raw request
-            self.raw_request = await middleware.modify_request(
-                self.raw_request
-            )
-
-            # If the result of .modify_request() is not a RawRequest,
-            # raise an exception
-            if not isinstance(self.raw_request, RawRequest):
-                raise MisconfiguredException(
-                    f"{middleware.__class__.__name__}.modify_request "
-                    "must return a RawRequest"
-                )
-
-    async def apply_response_middlewares(self, response) -> Any:
-        for middleware in self._middlewares:
-            response = await middleware.modify_response(response)
-            # If the result of .modify_response() is not a Response,
-            # don't care about it. It's not the middlewares fault
-            # if the user doesn't know what they're doing.
-        return response
-
-    async def _execute(self, func, *args, **kwargs):
-        kwargs, self_, cls_ = self.merge_args_and_kwargs(func, *args, **kwargs)
-        self.update_configuration(self_, cls_)
-        self.prepare_request(func, **kwargs)
-        await self.apply_request_middlewares(func, **kwargs)
+    async def _execute(self, request: RawRequest):
         async with httpx.AsyncClient(follow_redirects=True) as client:
-            httpx_request = self.raw_request.to_httpx_request()
+            httpx_request = request.to_httpx_request()
             httpx_response = await self.wait_for(
-                func=client.send, request=httpx_request
+                client=client, request=httpx_request
             )
-            response = self.parse_response(
-                func=func,
+            return self.parse_response(
                 httpx_request=httpx_request,
                 httpx_response=httpx_response,
             )
-            return await self.apply_response_middlewares(response)
 
 
 class SyncExecutor(Executor):
-    def wait_for(self, func: Callable, request: httpx.Request):
+    def wait_for(self, client: httpx.Client, request: httpx.Request):
         """
         This method is used to wait for a function to finish, especially
         for timeout handling. It uses threading to wait for the function
@@ -222,7 +225,7 @@ class SyncExecutor(Executor):
             queue: Queue = Queue()
 
             def wrapper():
-                result = func(request)
+                result = client.send(request)
                 queue.put(result)
 
             thread = threading.Thread(target=wrapper)
@@ -236,45 +239,15 @@ class SyncExecutor(Executor):
                     timeout=timeout,
                     request=request,
                 )
-        return func(request)
+        return client.send(request)
 
-    def apply_request_middlewares(self, func, **kwargs) -> None:
-        for middleware in self._middlewares:
-            # Set function to be used in middleware
-            middleware.set_func(func)
-
-            # Modify raw request
-            self.raw_request = middleware.modify_request(self.raw_request)
-
-            # If the result of .modify_request() is not a RawRequest,
-            # raise an exception
-            if not isinstance(self.raw_request, RawRequest):
-                raise MisconfiguredException(
-                    f"{middleware.__class__.__name__}.modify_request "
-                    "must return a RawRequest"
-                )
-
-    def apply_response_middlewares(self, response) -> Any:
-        for middleware in self._middlewares:
-            response = middleware.modify_response(response)
-            # If the result of .modify_response() is not a Response,
-            # don't care about it. It's not the middlewares fault
-            # if the user doesn't know what they're doing.
-        return response
-
-    def _execute(self, func, *args, **kwargs):
-        kwargs, self_, cls_ = self.merge_args_and_kwargs(func, *args, **kwargs)
-        self.update_configuration(self_, cls_)
-        self.prepare_request(func, **kwargs)
-        self.apply_request_middlewares(func, **kwargs)
+    def _execute(self, request: RawRequest):
         with httpx.Client(follow_redirects=True) as client:
-            httpx_request = self.raw_request.to_httpx_request()
+            httpx_request = request.to_httpx_request()
             httpx_response = self.wait_for(
-                func=client.send, request=httpx_request
+                client=client, request=httpx_request
             )
-            response = self.parse_response(
-                func=func,
+            return self.parse_response(
                 httpx_request=httpx_request,
                 httpx_response=httpx_response,
             )
-            return self.apply_response_middlewares(response)

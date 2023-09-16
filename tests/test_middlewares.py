@@ -1,135 +1,170 @@
-from typing import List
+import logging
+from unittest.mock import MagicMock
 
 import pytest
+from pytest_mock import MockerFixture
 
-from declarativex import BaseClient, http
-from declarativex.exceptions import MisconfiguredException
-from .fixtures.middlewares.dummy import (
-    SyncDummyMiddleware,
-    AsyncDummyMiddleware,
-    SyncInvalidDummyMiddleware,
-    AsyncInvalidDummyMiddleware,
-)
+from declarativex import Middleware, http, MisconfiguredException
 
 
-class SyncTestClient(BaseClient):
-    middlewares = [SyncDummyMiddleware()]
-    base_url = "https://jsonplaceholder.typicode.com"
+class FooMiddleware(Middleware):
+    def __call__(self, *, request, call_next):
+        logging.info("pre FooMiddleware")
+        response = call_next(request)
+        logging.info("post FooMiddleware")
+        return response
 
-    @http("GET", "/posts")
-    def get_posts(self) -> List[dict]:
-        pass
+
+class BarMiddleware(Middleware):
+    def __call__(self, *, request, call_next):
+        logging.info("pre BarMiddleware")
+        response = call_next(request)
+        logging.info("post BarMiddleware")
+        return response
 
 
-class AsyncTestClient(BaseClient):
-    middlewares = [AsyncDummyMiddleware()]
-    base_url = "https://jsonplaceholder.typicode.com"
+class AsyncFooMiddleware(Middleware):
+    async def __call__(self, *, request, call_next):
+        logging.info("pre AsyncFooMiddleware")
+        response = await call_next(request)
+        logging.info("post AsyncFooMiddleware")
+        return response
 
-    @http("GET", "/posts")
-    async def get_posts(self) -> List[dict]:
-        pass
+
+class AsyncBarMiddleware(Middleware):
+    async def __call__(self, *, request, call_next):
+        logging.info("pre AsyncBarMiddleware")
+        response = await call_next(request)
+        logging.info("post AsyncBarMiddleware")
+        return response
 
 
 def test_sync_middleware():
-    client = SyncTestClient()
-    posts = client.get_posts()
-    # Without middleware, the userId is not present in
-    # the query params and len(posts) == 100 (the default
-    # number of posts returned by the API)
-    # With the middleware, the userId is present in the query
-    # params and len(posts) == 10 (the number of posts returned
-    # by the API for userId=1)
-    assert len(posts) == 10
-    assert all(post["userId"] == 1 for post in posts)
+    @http(
+        "GET",
+        "api/users",
+        base_url="https://reqres.in",
+        middlewares=[FooMiddleware(), BarMiddleware()],
+    )
+    def get_users():
+        pass
+
+    get_users()
 
 
 @pytest.mark.asyncio
 async def test_async_middleware():
-    client = AsyncTestClient()
-    posts = await client.get_posts()
-    # Without middleware, the userId is not present in
-    # the query params and len(posts) == 100 (the default
-    # number of posts returned by the API)
-    # With the middleware, the userId is present in the query
-    # params and len(posts) == 10 (the number of posts returned
-    # by the API for userId=2)
-    assert len(posts) == 10
-    assert all(post["userId"] == 2 for post in posts)
-
-
-def test_async_middleware_in_sync_function():
     @http(
         "GET",
-        "/posts",
-        base_url="https://jsonplaceholder.typicode.com",
-        middlewares=[AsyncDummyMiddleware()],
+        "api/users",
+        base_url="https://reqres.in",
+        middlewares=[AsyncFooMiddleware(), AsyncBarMiddleware()],
     )
-    def get_posts() -> List[dict]:
+    async def get_users():
         pass
 
-    with pytest.raises(MisconfiguredException) as exc:
-        _ = get_posts()
-
-    assert str(exc.value) == (
-        "AsyncMiddleware cannot be used with sync functions, "
-        "use Middleware instead."
-    )
+    await get_users()
 
 
 @pytest.mark.asyncio
-async def test_sync_middleware_in_async_function():
+async def test_sync_async_middleware():
     @http(
         "GET",
-        "/posts",
-        base_url="https://jsonplaceholder.typicode.com",
-        middlewares=[SyncDummyMiddleware()],
+        "api/users",
+        base_url="https://reqres.in",
+        middlewares=[FooMiddleware(), AsyncBarMiddleware()],
     )
-    async def get_posts() -> List[dict]:
+    async def get_users():
         pass
 
     with pytest.raises(MisconfiguredException) as exc:
-        _ = await get_posts()
+        await get_users()
 
     assert str(exc.value) == (
-        "Middleware cannot be used with async functions, "
-        "use AsyncMiddleware instead."
+        "Cannot use sync middleware(FooMiddleware) with async function"
     )
 
 
-def test_sync_invalid_middleware():
+def test_async_sync_middleware():
     @http(
         "GET",
-        "/posts",
-        base_url="https://jsonplaceholder.typicode.com",
-        middlewares=[SyncInvalidDummyMiddleware()],
+        "api/users",
+        base_url="https://reqres.in",
+        middlewares=[AsyncFooMiddleware(), BarMiddleware()],
     )
-    def get_posts() -> List[dict]:
+    def get_users():
         pass
 
     with pytest.raises(MisconfiguredException) as exc:
-        _ = get_posts()
+        get_users()
 
     assert str(exc.value) == (
-        "SyncInvalidDummyMiddleware.modify_request "
-        "must return a RawRequest"
+        "Cannot use async middleware(AsyncFooMiddleware) with sync function"
     )
 
 
-@pytest.mark.asyncio
-async def test_async_invalid_middleware():
+def test_middleware_creation_with_wrong_signature():
+    with pytest.raises(TypeError) as exc:
+
+        class CustomMiddleware(Middleware):
+            def __call__(self, *, request):
+                pass
+
+    assert str(exc.value) == (
+        "Expected parameter 'call_next' in CustomMiddleware.__call__"
+    )
+
+    with pytest.raises(TypeError) as exc:
+
+        class CustomMiddleware(Middleware):
+            def __call__(self, *, request, call_next, extra):
+                pass
+
+    assert str(exc.value) == (
+        "Unexpected parameters ['extra'] in CustomMiddleware.__call__"
+    )
+
+
+def test_middleware_dont_call_client(mocker: MockerFixture):
+    class CacheMiddleware(Middleware):
+        cache = {}
+
+        def add_to_cache(self, url, response):
+            self.cache[url] = response
+
+        def get_from_cache(self, url):
+            return self.cache.get(url, None)
+
+        def __call__(self, *, request, call_next):
+            if request.method != "GET":
+                return call_next(request)
+            url = request.url()
+            if url in self.cache:
+                return self.get_from_cache(url)
+            response = call_next(request)
+            self.add_to_cache(url, response)
+            return response
+
+    middleware = CacheMiddleware()
+
+    add = mocker.patch.object(CacheMiddleware, "add_to_cache", MagicMock(wraps=middleware.add_to_cache))
+    get = mocker.patch.object(CacheMiddleware, "get_from_cache", MagicMock(wraps=middleware.get_from_cache))
+
     @http(
         "GET",
-        "/posts",
-        base_url="https://jsonplaceholder.typicode.com",
-        middlewares=[AsyncInvalidDummyMiddleware()],
+        "api/users",
+        base_url="https://reqres.in",
+        middlewares=[CacheMiddleware()],
     )
-    async def get_posts() -> List[dict]:
+    def get_users():
         pass
 
-    with pytest.raises(MisconfiguredException) as exc:
-        _ = await get_posts()
-
-    assert str(exc.value) == (
-        "AsyncInvalidDummyMiddleware.modify_request "
-        "must return a RawRequest"
-    )
+    get_users()
+    assert get.call_count == 0
+    assert add.call_count == 1
+    get_users()
+    assert get.call_count == 1
+    assert add.call_count == 1
+    get_users()
+    assert get.call_count == 2
+    assert add.call_count == 1
