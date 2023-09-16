@@ -314,6 +314,10 @@ class RequestModifier:
                         # If the dependency is not an instance of Dependency,
                         # we raise an AnnotationException.
                         raise AnnotationException(annotation)
+                else:
+                    # If the dependency is already an instance of Dependency,
+                    # we are setting only the type hint.
+                    dependency.type_hint = type_hint
             elif key in url_template_variables:
                 # If the parameter is in the URL template and not annotated,
                 # we assume it is a Path dependency.
