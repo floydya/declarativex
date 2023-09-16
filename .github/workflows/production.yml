@@ -21,7 +21,7 @@ jobs:
           python-version: '3.11'
           cache: poetry
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --all-extras
       - name: Run Flake8
         run: poetry run flake8 src/declarativex/
 
@@ -38,7 +38,7 @@ jobs:
           python-version: '3.11'
           cache: poetry
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --all-extras
       - name: Run Pylint
         run: poetry run pylint src/declarativex/
 
@@ -55,7 +55,7 @@ jobs:
           python-version: '3.11'
           cache: poetry
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --all-extras
       - name: Run Mypy
         run: poetry run mypy src/declarativex/
 
@@ -78,7 +78,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: poetry
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --all-extras
       - name: Install Pydantic
         run: poetry add "pydantic${{ matrix.pydantic-version }}"
       - name: Run Pytest
@@ -100,7 +100,7 @@ jobs:
           python-version: '3.11'
           cache: poetry
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --all-extras
       - name: Set version in pyproject.toml
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}

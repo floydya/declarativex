@@ -25,7 +25,7 @@ from .utils import ReturnType
 
 # Check if h2 is installed to enable http2 support
 try:  # pragma: no cover
-    import h2
+    import h2  # type: ignore[import]
 except ImportError:  # pragma: no cover
     h2 = None
 
@@ -210,7 +210,7 @@ class AsyncExecutor(Executor):
 
     async def _execute(self, request: RawRequest):
         async with httpx.AsyncClient(
-            **{"follow_redirects": True, "http2": bool(h2)}
+            follow_redirects=True, http2=bool(h2)
         ) as client:
             httpx_request = request.to_httpx_request()
             httpx_response = await self.wait_for(
@@ -256,7 +256,7 @@ class SyncExecutor(Executor):
 
     def _execute(self, request: RawRequest):
         with httpx.Client(
-            **{"follow_redirects": True, "http2": bool(h2)}
+            follow_redirects=True, http2=bool(h2)
         ) as client:
             httpx_request = request.to_httpx_request()
             httpx_response = self.wait_for(

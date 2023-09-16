@@ -23,6 +23,6 @@ runs:
         python-version: '3.11'
         cache: poetry
     - name: Install dependencies
-      run: poetry install
+      run: poetry install --all-extras
     - name: Install Pydantic
       run: poetry add pydantic==${{ inputs.pydantic-version }}

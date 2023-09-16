@@ -35,12 +35,15 @@ homepage = "https://github.com/floydya/declarativex"
 python = ">=3.9,<4"
 httpx = "^0.25.0"
 pydantic = ">1,<3"
+h2 = {version = ">=3,<5", optional = true}
+brotli = {version = "*", optional = true, markers = "platform_python_implementation == 'CPython'"}
+brotlicffi = {version = "*", optional = true, markers = "platform_python_implementation != 'CPython'"}
 
 [tool.poetry.extras]
-http2 = ["h2>=3,<5"]
+http2 = ["h2"]
 brotli = [
-    "brotli; platform_python_implementation == 'CPython'",
-    "brotlicffi; platform_python_implementation != 'CPython'",
+    "brotli",
+    "brotlicffi",
 ]
 
 [tool.poetry.group.dev.dependencies]

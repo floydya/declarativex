@@ -19,7 +19,7 @@ jobs:
           python-version: '3.11'
           cache: poetry
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --all-extras
       - name: Run Flake8
         run: |
           output_file="flake8-output.txt"
@@ -43,7 +43,7 @@ jobs:
           python-version: '3.11'
           cache: poetry
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --all-extras
       - name: Run Pylint
         run: |
           output_file="pylint-output.txt"
@@ -66,7 +66,7 @@ jobs:
           python-version: '3.11'
           cache: poetry
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --all-extras
       - name: Run mypy
         run: |
           output_file="mypy-output.txt"
@@ -96,7 +96,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: poetry
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --all-extras
       - name: Install Pydantic
         run: poetry add "pydantic${{ matrix.pydantic-version }}"
       - name: Run Pytest
@@ -117,7 +117,7 @@ jobs:
           python-version: 3.11
           cache: poetry
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --all-extras
       - name: Build coverage file
         run: |
           poetry run pytest -n 6 --junitxml=pytest.xml --cov=src/declarativex tests/ | tee pytest-coverage.txt
