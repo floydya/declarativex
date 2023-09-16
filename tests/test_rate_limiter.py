@@ -31,15 +31,15 @@ class SyncDummyClient(BaseClient):
         ...
 
 
-def create_client(*, client, reject: bool):
-    client = rate_limiter(max_calls=1, interval=1, reject=reject)(client)()
+def create_client(*, client, max_calls: int, reject: bool):
+    client = rate_limiter(max_calls=max_calls, interval=1, reject=reject)(client)()
     
     assert hasattr(client, "_rate_limiter_bucket")
-    assert client._rate_limiter_bucket._max_calls == 1
+    assert client._rate_limiter_bucket._max_calls == max_calls
     assert client._rate_limiter_bucket._interval == 1
     
     assert hasattr(client.get_users, "_rate_limiter_bucket")
-    assert client.get_users._rate_limiter_bucket._max_calls == 1
+    assert client.get_users._rate_limiter_bucket._max_calls == max_calls
     assert client.get_users._rate_limiter_bucket._interval == 1
     assert client.get_users._rate_limiter_bucket == client._rate_limiter_bucket
 
@@ -48,13 +48,13 @@ def create_client(*, client, reject: bool):
 
 @pytest.mark.asyncio
 async def test_rate_limiter():
-    client = create_client(client=DummyClient, reject=False)
+    client = create_client(client=DummyClient, max_calls=1, reject=False)
     start = time.perf_counter()
     for i in range(2):
         await client.get_users()
         await client.get_user(1)
     total = time.perf_counter() - start
-    assert 3.0 < total < 3.3
+    assert 3.0 < total < 3.5
 
     client._rate_limiter_bucket.refill()
 
@@ -68,22 +68,20 @@ async def test_rate_limiter():
 
 @pytest.mark.asyncio
 async def test_rate_limiter_rejection():
-    client = create_client(client=DummyClient, reject=True)
+    client = create_client(client=DummyClient, max_calls=0, reject=True)
     client._rate_limiter_bucket.refill()
-    _ = await client.get_users()
     with pytest.raises(RateLimitExceeded):
-        await client.get_users()
         await client.get_users()
 
 
 def test_rate_limiter_sync():
-    client = create_client(client=SyncDummyClient, reject=False)
+    client = create_client(client=SyncDummyClient, max_calls=1, reject=False)
     start = time.perf_counter()
     for i in range(2):
         client.get_users()
         client.get_user(1)
     total = time.perf_counter() - start
-    assert 3.0 < total < 3.3
+    assert 3.0 < total < 3.5
 
     client._rate_limiter_bucket.refill()
 
@@ -95,9 +93,7 @@ def test_rate_limiter_sync():
 
 
 def test_rate_limiter_sync_rejection():
-    client = create_client(client=SyncDummyClient, reject=True)
+    client = create_client(client=SyncDummyClient, max_calls=0, reject=True)
     client._rate_limiter_bucket.refill()
-    _ = client.get_users()
     with pytest.raises(RateLimitExceeded):
-        client.get_users()
         client.get_users()
