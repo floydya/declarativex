@@ -127,8 +127,9 @@ Raised when a request fails when parsing of the response fails.
 __init__(response: Response)
 ```
 
+---
 
+## <kbd>class</kbd> `RateLimitExceeded`
 
-
-
+Raised when a request fails due to rate limiting.
 

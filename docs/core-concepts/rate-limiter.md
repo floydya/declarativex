@@ -82,7 +82,7 @@ It supports both sync and async declarations.
     ```python hl_lines="3"
     from declarativex import http, rate_limiter
 
-    @rate_limiter(max_calls, interval)
+    @rate_limiter(max_calls: int, interval: float, reject: bool)
     @http(...)
     def method_name() -> dict:
         ...
@@ -117,3 +117,4 @@ It supports both sync and async declarations.
 
 - `max_calls` - maximum number of calls to the endpoint
 - `interval` - interval between calls in seconds
+- `reject` - whether to reject the request or wait for the next interval. Defaults to `False`, if `True` - raises [`RateLimitExceeded`](../api/exceptions.md#class-ratelimitexceeded) exception.

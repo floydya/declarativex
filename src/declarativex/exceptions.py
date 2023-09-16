@@ -148,6 +148,12 @@ class UnprocessableEntityException(DeclarativeException):
         )
 
 
+class RateLimitExceeded(DeclarativeException):
+    """
+    Raised when a request fails due to rate limiting.
+    """
+
+
 __all__ = [
     "DeclarativeException",
     "MisconfiguredException",
@@ -156,4 +162,5 @@ __all__ = [
     "TimeoutException",
     "HTTPException",
     "UnprocessableEntityException",
+    "RateLimitExceeded",
 ]

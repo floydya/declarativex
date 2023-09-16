@@ -3,6 +3,8 @@ import time
 from functools import wraps
 from typing import TypeVar, Callable, Union, Awaitable
 
+from .exceptions import RateLimitExceeded
+
 ReturnType = TypeVar("ReturnType")
 
 
@@ -29,8 +31,9 @@ class Bucket:
 
 
 class rate_limiter:
-    def __init__(self, max_calls: int, interval: float):
+    def __init__(self, max_calls: int, interval: float, reject: bool = False):
         self._bucket = Bucket(max_calls, interval)
+        self._reject = reject
         self._loop = asyncio.get_event_loop()
         self._lock = asyncio.Lock()
 
@@ -55,6 +58,8 @@ class rate_limiter:
                 # check if we have to wait for a function call
                 # (min 1 token in order to make a call)
                 if self._bucket.token_bucket < 1.0:
+                    if self._reject:
+                        raise RateLimitExceeded()
                     left_to_wait = (
                         1 - self._bucket.token_bucket
                     ) / self._bucket.token_fill_rate
@@ -81,6 +86,8 @@ class rate_limiter:
             # check if we have to wait for a function call
             # (min 1 token in order to make a call)
             if self._bucket.token_bucket < 1.0:
+                if self._reject:
+                    raise RateLimitExceeded()
                 left_to_wait = (
                     1 - self._bucket.token_bucket
                 ) / self._bucket.token_fill_rate

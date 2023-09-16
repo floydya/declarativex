@@ -17,6 +17,7 @@ from .exceptions import (
     HTTPException,
     TimeoutException,
     UnprocessableEntityException,
+    RateLimitExceeded,
 )
 from .methods import http
 from .middlewares import Middleware
