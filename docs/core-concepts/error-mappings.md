@@ -1,3 +1,8 @@
+---
+title: Error Mappings - Core Concepts in DeclarativeX
+description: Discover how to map errors in DeclarativeX. Get insights into customizing error responses for better exception handling.
+---
+
 # Error mapping
 
 ## Overview

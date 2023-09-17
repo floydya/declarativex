@@ -1,3 +1,8 @@
+---
+title: Compatibility - DeclarativeX Documentation
+description: Check out the compatibility guide for DeclarativeX. Learn which Python versions and libraries are supported for a smooth experience.
+---
+
 # Compatibility 🤝
 
 ## Introduction

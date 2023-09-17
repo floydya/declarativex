@@ -1,3 +1,8 @@
+---
+title: Dependencies - Core Concepts in DeclarativeX
+description: Learn about dependencies in DeclarativeX. Understand how to manage and inject dependencies into your HTTP clients.
+---
+
 # Dependencies Explained 🤓
 
 This documentation primarily consists of classes that model various types of HTTP request dependencies, 

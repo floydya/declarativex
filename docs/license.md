@@ -1,3 +1,8 @@
+---
+title: License - DeclarativeX Documentation
+description: Read the license terms for using DeclarativeX. Understand the legal aspects and permissions for using this Python library.
+---
+
 # License 📜
 
 ## The MIT License (MIT)

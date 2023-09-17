@@ -1,3 +1,8 @@
+---
+title: Exceptions - API DeclarativeX Documentation
+description: Learn about the exceptions in DeclarativeX, a Python library for HTTP clients.
+---
+
 <!-- markdownlint-disable -->
 
 # <kbd>module</kbd> `exceptions.py`

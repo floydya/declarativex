@@ -1,3 +1,8 @@
+---
+title: DeclarativeX Documentation
+description: Welcome to DeclarativeX documentation. Get started with this Python library for building robust, declarative HTTP clients.
+---
+
 # Welcome to DeclarativeX 🚀
 
 ## Introduction

@@ -1,3 +1,8 @@
+---
+title: Models - API DeclarativeX Documentation
+description: Dive into the models of DeclarativeX. Discover how they are defined and used.
+---
+
 <!-- markdownlint-disable -->
 
 # <kbd>module</kbd> `models`

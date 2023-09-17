@@ -1,3 +1,8 @@
+---
+title: Contributing to DeclarativeX
+description: Interested in contributing to DeclarativeX? Get guidelines on how to submit pull requests, report issues, and enhance the library.
+---
+
 # Contributing to DeclarativeX 🛠️
 
 ## Hey, Future Contributor! 👋

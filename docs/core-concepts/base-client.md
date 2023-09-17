@@ -1,3 +1,8 @@
+---
+title: Base Client - Core Concepts in DeclarativeX
+description: Explore the Base Client in DeclarativeX. Learn how to set up and customize your HTTP clients for various web services.
+---
+
 # BaseClient: The Heart of DeclarativeX ❤️
 
 ## Introduction

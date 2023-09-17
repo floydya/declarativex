@@ -1,3 +1,8 @@
+---
+title: HTTP Declaration - Core Concepts in DeclarativeX
+description: Learn the fundamentals of HTTP declaration in DeclarativeX. Understand how to define HTTP methods and endpoints effectively.
+---
+
 # HTTP declaration
 
 DeclarativeX supports two ways of declaring clients: class-based and function-based.

@@ -1,3 +1,8 @@
+---
+title: Auto Retry - Core Concepts in DeclarativeX
+description: Understand the auto-retry mechanism in DeclarativeX. Learn how to implement retries in your HTTP clients for better fault tolerance.
+---
+
 # Auto retry
 
 ## What is auto retry?

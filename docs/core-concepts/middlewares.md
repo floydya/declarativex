@@ -1,3 +1,8 @@
+---
+title: Middlewares - Core Concepts in DeclarativeX
+description: Dive into middlewares in DeclarativeX. Learn how to add pre and post-processing logic to your HTTP clients.
+---
+
 # Middlewares
 
 ## Overview

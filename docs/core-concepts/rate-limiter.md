@@ -1,3 +1,8 @@
+---
+title: Rate Limiter - Core Concepts in DeclarativeX
+description: Understand rate limiting in DeclarativeX. Learn how to use rate limiter to manage API requests efficiently.
+---
+
 # Rate limiter
 
 There is a way to not get banned by the external API you're using. It's called rate limiting.
