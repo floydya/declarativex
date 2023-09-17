@@ -23,10 +23,10 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-documentation = "https://floydya.github.io/declarativex"
+documentation = "https://declarativex.dev"
 keywords = ["http", "declarative", "client", "async", "httpx", "pydantic"]
 repository = "https://github.com/floydya/declarativex"
-homepage = "https://github.com/floydya/declarativex"
+homepage = "https://declarativex.dev"
 
 [tool.poetry.urls]
 "Bug Tracker" = 'https://github.com/floydya/declarativex/issues'
