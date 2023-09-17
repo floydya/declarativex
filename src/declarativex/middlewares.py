@@ -4,13 +4,12 @@ import inspect
 from typing import (
     Callable,
     TYPE_CHECKING,
-    TypeVar,
 )
+
+from .utils import ReturnType
 
 if TYPE_CHECKING:
     from .models import RawRequest
-
-ReturnType = TypeVar("ReturnType")
 
 
 class Signature(abc.ABCMeta):
