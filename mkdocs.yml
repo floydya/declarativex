@@ -1,7 +1,7 @@
 site_name: DeclarativeX
 site_description: DeclarativeX is a Python library for building declarative APIs.
 strict: true
-site_url: https://floydya.github.io/declarativex/
+site_url: https://declarativex.dev/
 
 theme:
   name: material
