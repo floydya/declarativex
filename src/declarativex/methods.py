@@ -13,14 +13,14 @@ from typing import (
 from .executors import AsyncExecutor, SyncExecutor
 from .middlewares import Middleware
 from .models import ClientConfiguration, EndpointConfiguration
-from .utils import ReturnType
+from .utils import ReturnType, DECLARED_MARK
 
 
 def http(
     method: str,
     path: str,
     *,
-    timeout: Optional[int] = None,
+    timeout: Optional[float] = None,
     base_url: str = "",
     default_query_params: Optional[Dict[str, Any]] = None,
     default_headers: Optional[Dict[str, str]] = None,
@@ -59,7 +59,7 @@ def http(
                     endpoint_configuration=endpoint_configuration
                 ).execute(func, *args, **kwargs)
 
-        setattr(inner, "_declarativex", True)
+        setattr(inner, DECLARED_MARK, True)
         inner.__annotations__["return"] = (
             inspect.signature(func).return_annotation
         )

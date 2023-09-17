@@ -22,5 +22,6 @@ from .exceptions import (
 from .methods import http
 from .middlewares import Middleware
 from .rate_limiter import rate_limiter
+from .retry import retry
 
 __version__ = "v1.0.0"
