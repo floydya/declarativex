@@ -6,9 +6,26 @@ site_url: https://floydya.github.io/declarativex/
 theme:
   name: material
   palette:
-    scheme: slate
-    primary: custom
-    accent: custom
+    - media: "(prefers-color-scheme)"
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
   features:
     - content.code.copy
     - navigation.instant
@@ -35,6 +52,7 @@ nav:
     - Rate Limiting: core-concepts/rate-limiter.md
     - Middlewares: core-concepts/middlewares.md
     - Mapping errors: core-concepts/error-mappings.md
+    - Auto retry: core-concepts/auto-retry.md
   - API:
     - Models: api/models.md
     - Exceptions: api/exceptions.md
