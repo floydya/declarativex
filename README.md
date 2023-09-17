@@ -31,7 +31,7 @@ pip install declarativex
 
 ## Docs 📖
 
-Find all the details at [https://floydya.github.io/declarativex](https://floydya.github.io/declarativex).
+Find all the details at [https://declarativex.dev](https://declarativex.dev).
 
 ## Show Some Love ❤️
 
