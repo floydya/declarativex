@@ -68,6 +68,7 @@ edit_uri: edit/main/docs/
 plugins:
   - search
   - offline
+  - social
 
 
 markdown_extensions:

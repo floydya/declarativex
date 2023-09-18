@@ -127,5 +127,5 @@ jobs:
           path: .cache
           restore-keys: |
             mkdocs-
-      - run: pip install mkdocs-material markdown-include mkdocs-exclude-search
+      - run: pip install mkdocs-material markdown-include mkdocs-exclude-search pillow cairosvg
       - run: mkdocs gh-deploy --force
