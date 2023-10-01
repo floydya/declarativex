@@ -19,12 +19,12 @@ from urllib.parse import urljoin
 import httpx
 
 from .client import BaseClient
-from .compatibility import parse_obj_as
 from .dependencies import RequestModifier
 from .exceptions import MisconfiguredException, UnprocessableEntityException
 from .middlewares import Middleware
+from .pydantic import pydantic
 from .utils import ReturnType, SUPPORTED_METHODS
-from .warnings import warn_list_return_type
+from .warnings import warn_list_return_type, warn_unsupported_cast
 
 T = TypeVar("T")
 
@@ -134,8 +134,13 @@ class Response:
                 data=raw_response
             )
 
-        # In other cases, parse the response as the type hint.
-        return parse_obj_as(return_type, raw_response)
+        if pydantic:
+            # If pydantic installed, parse the response as the type hint.
+            return pydantic.parse_obj_as(return_type, raw_response)
+
+        # In all other cases, show a warning and return the raw response.
+        warn_unsupported_cast(return_type)  # pragma: no cover
+        return raw_response  # pragma: no cover
 
     def as_type_for_func(self, func: Callable[..., ReturnType]) -> ReturnType:
         """

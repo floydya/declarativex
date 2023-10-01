@@ -17,14 +17,12 @@ from typing import (
     get_origin,
 )
 
-from pydantic import BaseModel
-
-from .compatibility import to_dict
 from .exceptions import (
     AnnotationException,
     DependencyValidationError,
     MisconfiguredException,
 )
+from .pydantic import pydantic
 from .warnings import warn_no_type_hint
 
 if TYPE_CHECKING:
@@ -215,10 +213,10 @@ class Json(Dependency):
         :return: The modified request.
         """
         data = getattr(request, self.location.value)
-        if isinstance(self.value, BaseModel):
+        if pydantic and isinstance(self.value, pydantic.BaseModel):
             # If the value is a BaseModel, we convert it to
             # a dict and merge it with the JSON data.
-            data = {**data, **to_dict(self.value)}
+            data = {**data, **pydantic.to_dict(self.value)}
         elif dataclasses.is_dataclass(self.value):
             # If the value is a dataclass, we convert it to
             # a dict and merge it with the JSON data.

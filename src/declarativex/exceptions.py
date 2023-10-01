@@ -3,7 +3,7 @@ from typing import Type, Sequence, Union, Mapping, Optional, TYPE_CHECKING, Any
 
 import httpx
 
-from .compatibility import parse_obj_as
+from .pydantic import pydantic
 
 if TYPE_CHECKING:  # pragma: no cover
     from .models import RawRequest
@@ -128,8 +128,8 @@ class HTTPException(DeclarativeException):
         :return: httpx.Response or Instance of self._model
         """
         response = self._response
-        if self._model:
-            return parse_obj_as(self._model, response.json())
+        if self._model and pydantic:
+            return pydantic.parse_obj_as(self._model, response.json())
         return response
 
 

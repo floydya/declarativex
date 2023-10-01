@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Sequence, Type
+from typing import Dict, Optional, Sequence, Type, Callable
 
 from .exceptions import MisconfiguredException
 from .middlewares import Middleware
@@ -21,6 +21,8 @@ class BaseClient:
     default_query_params: Dict[str, str] = {}
     middlewares: Sequence[Middleware] = []
     error_mappings: Dict[int, Type] = {}
+
+    refill: Callable[..., None] = lambda _: None
 
     def __init__(
         self,

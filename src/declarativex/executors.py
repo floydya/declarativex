@@ -2,6 +2,7 @@
 import abc
 import asyncio
 import inspect
+import logging
 import threading
 from asyncio import (
     wait_for,
@@ -152,6 +153,7 @@ class Executor(abc.ABC):
         return execute_func(self.raw_request)
 
     def execute(self, func, *args, **kwargs):
+        logging.error(f"execute, {func}, {args}, {kwargs}")
         self.func = func
         kwargs, self_, cls_ = self.merge_args_and_kwargs(*args, **kwargs)
         self.update_configuration(self_, cls_)

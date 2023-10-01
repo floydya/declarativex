@@ -14,9 +14,9 @@ from declarativex import (
 )
 from tests.fixtures.schemas import dataclass, pydantic
 
-sync_dataclass_client = None
-sync_pydantic_client = None
-sync_dictionary_client = None
+dataclass_client = None
+pydantic_client = None
+dictionary_client = None
 
 
 for schema in [dataclass, pydantic, None]:
@@ -102,8 +102,8 @@ for schema in [dataclass, pydantic, None]:
             ...
 
     if schema == dataclass:
-        sync_dataclass_client = SyncClientPydantic()
+        dataclass_client = SyncClientPydantic()
     elif schema == pydantic:
-        sync_pydantic_client = SyncClientPydantic()
+        pydantic_client = SyncClientPydantic()
     elif schema is None:
-        sync_dictionary_client = SyncClientPydantic()
+        dictionary_client = SyncClientPydantic()

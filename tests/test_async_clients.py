@@ -12,11 +12,11 @@ from declarativex.exceptions import (
     TimeoutException,
 )
 from .fixtures import (
-    async_dataclass_client,
-    async_pydantic_client,
-    async_dictionary_client,
     dataclass,
     pydantic,
+    dataclass_client,
+    pydantic_client,
+    dictionary_client,
 )
 
 
@@ -24,9 +24,9 @@ from .fixtures import (
 @pytest.mark.parametrize(
     "client,response_type",
     [
-        (async_dataclass_client, dataclass.SingleResponse),
-        (async_pydantic_client, pydantic.SingleResponse),
-        (async_dictionary_client, dict),
+        (dataclass_client, dataclass.SingleResponse),
+        (pydantic_client, pydantic.SingleResponse),
+        (dictionary_client, dict),
     ],
 )
 async def test_async_get_user(client, response_type):
@@ -47,9 +47,9 @@ async def test_async_get_user(client, response_type):
 @pytest.mark.parametrize(
     "client,response_type",
     [
-        (async_dataclass_client, dataclass.PaginatedResponse),
-        (async_pydantic_client, pydantic.PaginatedResponse),
-        (async_dictionary_client, dict),
+        (dataclass_client, dataclass.PaginatedResponse),
+        (pydantic_client, pydantic.PaginatedResponse),
+        (dictionary_client, dict),
     ],
 )
 async def test_async_get_users(client, response_type):
@@ -69,18 +69,18 @@ async def test_async_get_users(client, response_type):
     "client,body,response_type",
     [
         (
-            async_dataclass_client,
+            dataclass_client,
             dataclass.BaseUserSchema(name="John", job="worker"),
             dataclass.UserCreateResponse,
         ),
         (
-            async_pydantic_client,
+            pydantic_client,
             pydantic.BaseUserSchema(name="John", job="worker"),
             pydantic.UserCreateResponse,
         ),
-        (async_dictionary_client, dict(name="John", job="worker"), dict),
+        (dictionary_client, dict(name="John", job="worker"), dict),
         (
-            async_dictionary_client,
+            dictionary_client,
             json.dumps({"name": "John", "job": "worker"}),
             dict,
         ),
@@ -115,9 +115,9 @@ async def test_async_create_user(client, body, response_type):
 @pytest.mark.parametrize(
     "client,response_type",
     [
-        (async_dataclass_client, dataclass.UserUpdateResponse),
-        (async_pydantic_client, pydantic.UserUpdateResponse),
-        (async_dictionary_client, dict),
+        (dataclass_client, dataclass.UserUpdateResponse),
+        (pydantic_client, pydantic.UserUpdateResponse),
+        (dictionary_client, dict),
     ],
 )
 async def test_async_update_user(client, response_type):
@@ -133,9 +133,9 @@ async def test_async_update_user(client, response_type):
 @pytest.mark.parametrize(
     "client",
     [
-        async_dataclass_client,
-        async_pydantic_client,
-        async_dictionary_client,
+        dataclass_client,
+        pydantic_client,
+        dictionary_client,
     ],
 )
 async def test_async_delete_user(client):
@@ -148,14 +148,12 @@ async def test_async_delete_user(client):
 @pytest.mark.parametrize(
     "client,response_type",
     [
-        (async_dataclass_client, dataclass.PaginatedResponse),
-        (async_pydantic_client, pydantic.PaginatedResponse),
-        (async_dictionary_client, dict),
+        (dataclass_client, dataclass.PaginatedResponse),
+        (pydantic_client, pydantic.PaginatedResponse),
+        (dictionary_client, dict),
     ],
 )
-async def test_async_get_resources_list(
-    client, response_type
-):
+async def test_async_get_resources_list(client, response_type):
     resources = await client.get_resources()
     assert isinstance(resources, response_type)
     if isinstance(resources, dict):
@@ -169,17 +167,15 @@ async def test_async_get_resources_list(
     "client,response_type,resource_type",
     [
         (
-            async_dataclass_client,
+            dataclass_client,
             dataclass.SingleResponse,
             dataclass.AnyResource,
         ),
-        (async_pydantic_client, pydantic.SingleResponse, pydantic.AnyResource),
-        (async_dictionary_client, dict, dict),
+        (pydantic_client, pydantic.SingleResponse, pydantic.AnyResource),
+        (dictionary_client, dict, dict),
     ],
 )
-async def test_async_get_resource(
-    client, response_type, resource_type
-):
+async def test_async_get_resource(client, response_type, resource_type):
     resource = await client.get_resource(1)
     assert isinstance(resource, response_type)
     if isinstance(resource, dict):
@@ -196,24 +192,22 @@ async def test_async_get_resource(
     "client,response_type,error_type",
     [
         (
-            async_dataclass_client,
+            dataclass_client,
             dataclass.RegisterResponse,
             dataclass.RegisterBadRequestResponse,
         ),
         (
-            async_pydantic_client,
+            pydantic_client,
             pydantic.RegisterResponse,
             pydantic.RegisterBadRequestResponse,
         ),
-        (async_dictionary_client, dict, httpx.Response),
+        (dictionary_client, dict, httpx.Response),
     ],
 )
-async def test_async_register(
-    client, response_type, error_type
-):
+async def test_async_register(client, response_type, error_type):
     user = await client.register(
         user={"email": "eve.holt@reqres.in", "password": "q1w2e3r4t5y6"},
-        auth="Bearer test"
+        auth="Bearer test",
     )
     assert isinstance(user, response_type)
     if isinstance(user, dict):

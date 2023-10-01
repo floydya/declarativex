@@ -11,9 +11,9 @@ from declarativex.exceptions import (
     TimeoutException,
 )
 from .fixtures import (
-    sync_dataclass_client,
-    sync_pydantic_client,
-    sync_dictionary_client,
+    dataclass_client,
+    pydantic_client,
+    dictionary_client,
     dataclass,
     pydantic,
 )
@@ -22,9 +22,9 @@ from .fixtures import (
 @pytest.mark.parametrize(
     "client,response_type",
     [
-        (sync_dataclass_client, dataclass.SingleResponse),
-        (sync_pydantic_client, pydantic.SingleResponse),
-        (sync_dictionary_client, dict),
+        (dataclass_client, dataclass.SingleResponse),
+        (pydantic_client, pydantic.SingleResponse),
+        (dictionary_client, dict),
     ],
 )
 def test_sync_get_user(client, response_type):
@@ -44,9 +44,9 @@ def test_sync_get_user(client, response_type):
 @pytest.mark.parametrize(
     "client,response_type",
     [
-        (sync_dataclass_client, dataclass.PaginatedResponse),
-        (sync_pydantic_client, pydantic.PaginatedResponse),
-        (sync_dictionary_client, dict),
+        (dataclass_client, dataclass.PaginatedResponse),
+        (pydantic_client, pydantic.PaginatedResponse),
+        (dictionary_client, dict),
     ],
 )
 def test_sync_get_users(client, response_type):
@@ -65,20 +65,20 @@ def test_sync_get_users(client, response_type):
     "client,body,response_type",
     [
         (
-            sync_dataclass_client,
-            dataclass.BaseUserSchema(name="John", job="worker"),
-            dataclass.UserCreateResponse,
+                dataclass_client,
+                dataclass.BaseUserSchema(name="John", job="worker"),
+                dataclass.UserCreateResponse,
         ),
         (
-            sync_pydantic_client,
-            pydantic.BaseUserSchema(name="John", job="worker"),
-            pydantic.UserCreateResponse,
+                pydantic_client,
+                pydantic.BaseUserSchema(name="John", job="worker"),
+                pydantic.UserCreateResponse,
         ),
-        (sync_dictionary_client, dict(name="John", job="worker"), dict),
+        (dictionary_client, dict(name="John", job="worker"), dict),
         (
-            sync_dictionary_client,
-            json.dumps({"name": "John", "job": "worker"}),
-            dict,
+                dictionary_client,
+                json.dumps({"name": "John", "job": "worker"}),
+                dict,
         ),
     ],
 )
@@ -110,9 +110,9 @@ def test_sync_create_user(client, body, response_type):
 @pytest.mark.parametrize(
     "client,response_type",
     [
-        (sync_dataclass_client, dataclass.UserUpdateResponse),
-        (sync_pydantic_client, pydantic.UserUpdateResponse),
-        (sync_dictionary_client, dict),
+        (dataclass_client, dataclass.UserUpdateResponse),
+        (pydantic_client, pydantic.UserUpdateResponse),
+        (dictionary_client, dict),
     ],
 )
 def test_sync_update_user(client, response_type):
@@ -127,9 +127,9 @@ def test_sync_update_user(client, response_type):
 @pytest.mark.parametrize(
     "client",
     [
-        sync_dataclass_client,
-        sync_pydantic_client,
-        sync_dictionary_client,
+        dataclass_client,
+        pydantic_client,
+        dictionary_client,
     ],
 )
 def test_sync_delete_user(client):
@@ -142,9 +142,9 @@ def test_sync_delete_user(client):
 @pytest.mark.parametrize(
     "client,response_type",
     [
-        (sync_dataclass_client, dataclass.PaginatedResponse),
-        (sync_pydantic_client, pydantic.PaginatedResponse),
-        (sync_dictionary_client, dict),
+        (dataclass_client, dataclass.PaginatedResponse),
+        (pydantic_client, pydantic.PaginatedResponse),
+        (dictionary_client, dict),
     ],
 )
 def test_sync_get_resources_list(client, response_type):
@@ -160,12 +160,12 @@ def test_sync_get_resources_list(client, response_type):
     "client,response_type,resource_type",
     [
         (
-            sync_dataclass_client,
-            dataclass.SingleResponse,
-            dataclass.AnyResource,
+                dataclass_client,
+                dataclass.SingleResponse,
+                dataclass.AnyResource,
         ),
-        (sync_pydantic_client, pydantic.SingleResponse, pydantic.AnyResource),
-        (sync_dictionary_client, dict, dict),
+        (pydantic_client, pydantic.SingleResponse, pydantic.AnyResource),
+        (dictionary_client, dict, dict),
     ],
 )
 def test_sync_get_resource(client, response_type, resource_type):
@@ -184,16 +184,16 @@ def test_sync_get_resource(client, response_type, resource_type):
     "client,response_type,error_type",
     [
         (
-            sync_dataclass_client,
-            dataclass.RegisterResponse,
-            dataclass.RegisterBadRequestResponse,
+                dataclass_client,
+                dataclass.RegisterResponse,
+                dataclass.RegisterBadRequestResponse,
         ),
         (
-            sync_pydantic_client,
-            pydantic.RegisterResponse,
-            pydantic.RegisterBadRequestResponse,
+                pydantic_client,
+                pydantic.RegisterResponse,
+                pydantic.RegisterBadRequestResponse,
         ),
-        (sync_dictionary_client, dict, httpx.Response),
+        (dictionary_client, dict, httpx.Response),
     ],
 )
 def test_sync_register(client, response_type, error_type):
