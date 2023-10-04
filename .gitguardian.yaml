@@ -1,0 +1,5 @@
+secret:
+  ignored-matches:
+  - match: c41c71837a9ffbb3eb165eb1fb62ebed35c129c9597ee17460a831a66a372422
+    name: Generic High Entropy Secret - tests/test_authentication.py
+version: 2
