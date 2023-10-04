@@ -58,14 +58,16 @@ auth = QueryParamsAuth(key="key", value="my_token")
 ### Class-based declaration
 
 ```python
-from declarativex import BaseClient, BearerAuth
+from declarativex import http, BaseClient, BearerAuth
 
 
 class MyClient(BaseClient):
     base_url = ...
     auth = BearerAuth("my_token")
 
-    ...
+    @http("GET", "/users")
+    def get_users(self) -> dict:
+        ...
 
 ```
 
@@ -80,3 +82,6 @@ def get_users() -> dict:
     ...
 
 ```
+
+!!! note
+  If auth declared in both class and function, the function auth will be used because it has more prioritized parameters.

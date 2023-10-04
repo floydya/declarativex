@@ -66,11 +66,9 @@ nav:
 repo_name: floydya/declarativex
 repo_url: https://github.com/floydya/declarativex
 edit_uri: edit/main/docs/
-
+use_directory_urls: true
 plugins:
   - search
-  - offline
-#  - social
 
 
 markdown_extensions:

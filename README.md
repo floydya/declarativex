@@ -32,6 +32,20 @@ We handle the nitty-gritty so you can focus on what really counts—your core lo
 pip install declarativex
 ```
 
+### Available extras 🎁
+
+DeclarativeX comes with a few extras that you can install separately. Here's a list of available extras:
+
+- `http2` - HTTP/2 support
+- `graphql` - GraphQL support
+- `brotli` - Brotli compression support
+
+To install an extra, just add it to the end of the command:
+
+```bash
+pip install declarativex[http2,graphql,brotli]
+```
+
 ## Docs 📖
 
 Find all the details at [https://declarativex.dev](https://declarativex.dev).

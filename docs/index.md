@@ -21,6 +21,25 @@ pip install declarativex
 
 And boom! You're good to go.
 
+## Available extras
+
+DeclarativeX comes with a few extras that you can install separately. Here's a list of available extras:
+
+- `http2` - HTTP/2 support
+- `graphql` - GraphQL support
+- `brotli` - Brotli compression support
+
+To install an extra, just add it to the end of the command:
+
+=== All
+    ```bash
+    pip install declarativex[http2,graphql,brotli]
+    ```
+=== Only one
+    ```bash
+    pip install declarativex[http2]
+    ```
+
 ## Quick Start Guide
 
 Ready to dive in? Here's a quick example to get you started:
