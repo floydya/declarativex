@@ -18,7 +18,7 @@ First things first, let's see how to initialize a `BaseClient`:
 from declarativex import BaseClient
 
 class MyClient(BaseClient):
-    pass
+    ...
 ```
 
 That's it! You've just created your first `BaseClient`. 🎉
@@ -37,6 +37,8 @@ The `base_url` is where all the magic starts. It's the root URL that your client
     class MyClient(BaseClient):
         base_url = "https://api.example.com"
 
+        ...
+
 
     client = MyClient()
     ```
@@ -49,7 +51,7 @@ The `base_url` is where all the magic starts. It's the root URL that your client
 
 
     class MyClient(BaseClient):
-        pass
+        ...
 
 
     client = MyClient(base_url="https://api.example.com")
@@ -64,6 +66,8 @@ The `base_url` is where all the magic starts. It's the root URL that your client
         def __init__(self, *args, **kwargs):
             kwargs["base_url"] = "https://api.example.com"
             super().__init__(*args, **kwargs)
+
+        ...
 
 
     client = MyClient()
@@ -84,6 +88,8 @@ Need to add some custom headers? No worries, BaseClient has got you covered.
         base_url = "https://api.example.com"
         default_headers = {"Authorization": f"Bearer {settings.EXAMPLE_API_TOKEN}"}
 
+        ...
+
 
     client = MyClient()
     ```
@@ -98,7 +104,7 @@ Need to add some custom headers? No worries, BaseClient has got you covered.
 
 
     class MyClient(BaseClient):
-        pass
+        ...
 
 
     client = MyClient(
@@ -120,6 +126,8 @@ Need to add some custom headers? No worries, BaseClient has got you covered.
             kwargs["default_headers"] = {"Authorization": "Bearer <token>"}
             super().__init__(*args, **kwargs)
 
+        ...
+
 
     client = MyClient()
     ```
@@ -140,6 +148,8 @@ request. Well, `BaseClient` has got you covered.
         base_url = "https://api.example.com"
         default_query_params = {"key": settings.STEAM_API_KEY}
 
+        ...
+
 
     client = MyClient()
     ```
@@ -154,7 +164,7 @@ request. Well, `BaseClient` has got you covered.
 
 
     class MyClient(BaseClient):
-        pass
+        ...
 
 
     client = MyClient(
@@ -176,6 +186,8 @@ request. Well, `BaseClient` has got you covered.
             kwargs["default_query_params"] = {"key": settings.STEAM_API_KEY}
             super().__init__(*args, **kwargs)
 
+        ...
+
 
     client = MyClient()
     ```
@@ -195,6 +207,8 @@ Middlewares are a powerful tool that allows you to modify requests and responses
         base_url = "https://api.example.com"
         middlewares = [MyMiddleware()]
 
+        ...
+
 
     client = MyClient()
     ```
@@ -207,7 +221,7 @@ Middlewares are a powerful tool that allows you to modify requests and responses
 
 
     class MyClient(BaseClient):
-        pass
+        ...
 
 
     client = MyClient(
@@ -244,6 +258,8 @@ You can use `pydantic.BaseModel`, `dataclass` or `TypedDict` to parse the respon
             400: BadRequestResponseSchema
         }
 
+        ...
+
 
     client = MyClient()
     ```
@@ -261,7 +277,7 @@ You can use `pydantic.BaseModel`, `dataclass` or `TypedDict` to parse the respon
 
 
     class MyClient(BaseClient):
-        pass
+        ...
 
 
     client = MyClient(

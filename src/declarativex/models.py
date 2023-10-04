@@ -18,6 +18,7 @@ from urllib.parse import urljoin
 
 import httpx
 
+from .auth import Auth
 from .client import BaseClient
 from .compatibility import parse_obj_as
 from .dependencies import RequestModifier
@@ -42,6 +43,7 @@ class Response:
         as_type: Convert the response to a specific type.
         as_type_for_func: Convert the response to the return type of function.
     """
+
     response: httpx.Response
 
     @staticmethod
@@ -131,7 +133,7 @@ class Response:
             return self._dataclass_from_dict(
                 outer_type,  # type: ignore[arg-type]
                 generic_type,
-                data=raw_response
+                data=raw_response,
             )
 
         # In other cases, parse the response as the type hint.
@@ -154,6 +156,7 @@ class ClientConfiguration:
     parameter or as a class attribute.
     """
     base_url: Optional[str] = dataclasses.field(default=None)
+    auth: Optional[Auth] = None
     default_query_params: Dict[str, Any] = dataclasses.field(
         default_factory=dict
     )
@@ -197,6 +200,7 @@ class ClientConfiguration:
             )
             return cls.create(
                 base_url=cls_instance.base_url,
+                auth=cls_instance.auth,
                 default_query_params=cls_instance.default_query_params,
                 default_headers=cls_instance.default_headers,
                 middlewares=cls_instance.middlewares,
@@ -211,6 +215,7 @@ class ClientConfiguration:
         """
         return ClientConfiguration(
             base_url=other.base_url or self.base_url,
+            auth=other.auth or self.auth,
             default_query_params={
                 **other.default_query_params,
                 **self.default_query_params,
@@ -231,15 +236,22 @@ class ClientConfiguration:
 
 
 @dataclasses.dataclass
+class GraphQLConfiguration:
+    query: str
+
+
+@dataclasses.dataclass
 class EndpointConfiguration:
     """
     Configuration for an endpoint. This class is used to configure the
     endpoint with a method, path, timeout and client configuration.
     """
+
     client_configuration: ClientConfiguration
     method: str
     path: str
     timeout: Optional[float] = dataclasses.field(default=5.0)
+    gql: Optional[GraphQLConfiguration] = None
 
     @property
     def url_template(self):
@@ -276,6 +288,7 @@ class RawRequest:
     arguments. The function signature is used to modify the request
     before it is sent.
     """
+
     method: str
     url_template: str
     path_params: Dict[str, str] = dataclasses.field(default_factory=dict)
@@ -284,6 +297,7 @@ class RawRequest:
     cookies: Dict[str, str] = dataclasses.field(default_factory=dict)
     json: Dict[str, Any] = dataclasses.field(default_factory=dict)
     timeout: Optional[float] = None
+    _gql: Optional[GraphQLConfiguration] = None
 
     @classmethod
     def initialize(
@@ -297,20 +311,30 @@ class RawRequest:
         """
         q = endpoint_configuration.client_configuration.default_query_params
         h = endpoint_configuration.client_configuration.default_headers
-        return RawRequest(
+        a = endpoint_configuration.client_configuration.auth
+        request = RawRequest(
             method=endpoint_configuration.method,
             url_template=endpoint_configuration.url_template,
             query_params=q,
             headers=h,
+            _gql=endpoint_configuration.gql,
         )
+        if a:
+            request = a.apply_auth(request)
+        return request
 
-    def prepare(self, func: Callable, **values) -> "RawRequest":
+    def prepare(
+        self,
+        func: Callable,
+        gql: Optional[GraphQLConfiguration] = None,
+        **values,
+    ) -> "RawRequest":
         """
         Prepare the request with a function and arguments. The function
         signature is used to modify the request before it is sent.
         """
         return RequestModifier.prepare_request(
-            request=self, func=func, **values
+            request=self, func=func, gql=gql, **values
         )
 
     def url(self):
@@ -318,11 +342,17 @@ class RawRequest:
 
     def to_httpx_request(self) -> httpx.Request:
         """Convert the request to a httpx.Request."""
+        if self._gql:
+            _json: dict[str, Any] = {"query": self._gql.query}
+            if self.json:
+                _json["variables"] = self.json
+        else:
+            _json = self.json
         return httpx.Request(
             method=self.method,
             url=self.url(),
             params=self.query_params,
             headers=self.headers,
             cookies=self.cookies,
-            json=self.json,
+            json=_json,
         )

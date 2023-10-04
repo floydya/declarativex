@@ -15,11 +15,23 @@ The `#!python @http` decorator is the core of DeclarativeX. It's used to declare
 
 ### Syntax
 
-```python
-@http(method, path, *, base_url, timeout, default_headers, default_query_params, middlewares)
-def method_name() -> dict:
-    ...
-```
+=== "Sync"
+    ```python
+    @http(method, path, *, base_url, timeout, default_headers, default_query_params, middlewares)
+    def method_name() -> dict:
+        ...
+    ```
+
+=== "Async"
+    ```python
+    @http(method, path, *, base_url, timeout, default_headers, default_query_params, middlewares)
+    async def method_name() -> dict:
+        ...
+    ```
+
+!!! tip
+    Sync and async functions are supported. Just define your function as `async` and you're good to go.
+
 
 !!! note "Keyword-only arguments"
     All arguments after `path` are keyword-only arguments, so you must specify them by name.
@@ -60,14 +72,15 @@ whether they're required or optional, and what each argument is for.
 
 #### Keyword-only arguments
 
-|           Name           |                      Type                      |              Required               |    Arg type    | Description                                                                      |
-|:------------------------:|:----------------------------------------------:|:-----------------------------------:|:--------------:|----------------------------------------------------------------------------------|
-|        `base_url`        |                 `#!python str`                 | [Not always](#base_url "See below") |    Keyword     | Sets the base URL for the request.                                               |
-|        `timeout`         |                 `#!python int`                 |    No, default: `#!python None`     |    Keyword     | The timeout to use.                                                              |
-|    `default_headers`     |                `#!python dict`                 |    No, default: `#!python None`     |    Keyword     | The headers to use with every request.                                           |
-|  `default_query_params`  |                `#!python dict`                 |    No, default: `#!python None`     |    Keyword     | The params to use with every request.                                            |
-| `middlewares` | `#!python list`  |    No, default: `#!python None`     |    Keyword     | The [middlewares](middlewares.md) to use with every request.       |
-| `error_mappings` | `#!python dict`  |    No, default: `#!python None`     |    Keyword     | The [error mappings](error-mappings.md) to use with every request. |
+|          Name          |                      Type                      |              Required               |    Arg type    | Description                                                        |
+|:----------------------:|:----------------------------------------------:|:-----------------------------------:|:--------------:|--------------------------------------------------------------------|
+|       `base_url`       |                 `#!python str`                 | [Not always](#base_url "See below") |    Keyword     | Sets the base URL for the request.                                 |
+|       `timeout`        |                 `#!python int`                 |    No, default: `#!python None`     |    Keyword     | The timeout to use.                                                |
+|         `auth`         | `#!python declarativex.Auth` |    No, default: `#!python None`     |    Keyword     | The [auth instance](./auth.md) to use.                             | 
+|   `default_headers`    |                `#!python dict`                 |    No, default: `#!python None`     |    Keyword     | The headers to use with every request.                             |
+| `default_query_params` |                `#!python dict`                 |    No, default: `#!python None`     |    Keyword     | The params to use with every request.                              |
+|     `middlewares`      | `#!python list`  |    No, default: `#!python None`     |    Keyword     | The [middlewares](middlewares.md) to use with every request.       |
+|    `error_mappings`    | `#!python dict`  |    No, default: `#!python None`     |    Keyword     | The [error mappings](error-mappings.md) to use with every request. |
 
 <div id="base_url" markdown>
 !!! danger "`base_url`"
@@ -106,22 +119,47 @@ Use the `BaseClient` class as a base class for your client and declare methods u
 
 #### Example
 
-```.python title="my_client.py"
-from declarativex import BaseClient, http
+=== "Sync"
 
+    ```.python title="my_client.py" hl_lines="10"
+    from declarativex import BaseClient, http
+    
+    
+    class MyClient(BaseClient):
+        base_url = "https://example.com"
+        default_query_params = {"api_key": "123456"}
+        default_headers = {"X-Trace": "<hash>"}
+    
+        @http("GET", "/users/{user_id}", timeout=10)
+        def get_user(self, user_id: int) -> dict:
+            ...
+    
+    
+    my_client = MyClient()
+    user: dict = my_client.get_user(user_id=1)
+    ```
 
-class MyClient(BaseClient):
-    base_url = "https://example.com"
-    default_query_params = {"api_key": "123456"}
-    default_headers = {"X-Trace": "<hash>"}
+=== "Async"
 
-    @http("GET", "/users/{user_id}", timeout=10)
-    def get_user(self, user_id: int) -> dict:
-        ...
+    ```.python title="my_client.py" hl_lines="12"
+    import asyncio
 
-
-my_client = MyClient()
-```
+    from declarativex import BaseClient, http
+    
+    
+    class MyClient(BaseClient):
+        base_url = "https://example.com"
+        default_query_params = {"api_key": "123456"}
+        default_headers = {"X-Trace": "<hash>"}
+    
+        @http("GET", "/users/{user_id}", timeout=10)
+        async def get_user(self, user_id: int) -> dict:
+            ...
+    
+    
+    my_client = MyClient()
+    user: dict = asyncio.run(my_client.get_user(user_id=1))
+    ```
 
 !!! danger "Class-based declaration"
     If you're using class-based declaration, you must pass `self` as the first argument to the method.
@@ -137,21 +175,43 @@ you to create a class. Commonly used for simple clients with one endpoint.
 
 #### Example
 
-```.python title="my_client.py"
-from declarativex import http
+=== "Sync"
+    ```.python title="my_client.py" hl_lines="12"
+    from declarativex import http
+    
+    
+    @http(
+        "GET", 
+        "/users/{user_id}", 
+        base_url"https://example.com",
+        timeout=10,
+        default_headers={"X-Trace": "<hash>"},
+        default_query_params={"api_key": "123456"}
+    )
+    def get_user(user_id: int) -> dict:
+        ...
+    ```
 
+=== "Async"
+    ```.python title="my_client.py" hl_lines="14"
+    import asyncio
 
-@http(
-    "GET", 
-    "/users/{user_id}", 
-    base_url"https://example.com",
-    timeout=10,
-    default_headers={"X-Trace": "<hash>"},
-    default_query_params={"api_key": "123456"}
-)
-def get_user(user_id: int) -> dict:
-    ...
-```
+    from declarativex import http
+    
+    
+    @http(
+        "GET", 
+        "/users/{user_id}", 
+        base_url"https://example.com",
+        timeout=10,
+        default_headers={"X-Trace": "<hash>"},
+        default_query_params={"api_key": "123456"}
+    )
+    def get_user(user_id: int) -> dict:
+        ...
+
+    user: dict = asyncio.run(get_user(user_id=1))
+    ```
 
 !!! note "Function-based declaration"
     

@@ -53,6 +53,8 @@ nav:
     - Middlewares: core-concepts/middlewares.md
     - Mapping errors: core-concepts/error-mappings.md
     - Auto retry: core-concepts/auto-retry.md
+    - Auth: core-concepts/auth.md
+    - GraphQL: core-concepts/graphql.md
   - API:
     - Models: api/models.md
     - Exceptions: api/exceptions.md
@@ -68,7 +70,7 @@ edit_uri: edit/main/docs/
 plugins:
   - search
   - offline
-  - social
+#  - social
 
 
 markdown_extensions:

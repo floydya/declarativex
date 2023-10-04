@@ -2,10 +2,10 @@ import asyncio
 import time
 from typing import Callable
 
-from .utils import DeclaredDecorator
+from .utils import SupportDecorator
 
 
-class retry(DeclaredDecorator):
+class retry(SupportDecorator):
     def __init__(
         self,
         max_retries: int,

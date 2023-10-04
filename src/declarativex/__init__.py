@@ -1,3 +1,4 @@
+from .auth import BasicAuth, BearerAuth, HeaderAuth, QueryParamsAuth
 from .client import BaseClient
 from .dependencies import (
     Path,

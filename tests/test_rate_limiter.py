@@ -11,6 +11,7 @@ from declarativex import (
     RateLimitExceeded,
     MisconfiguredException,
 )
+from declarativex.warnings import DeclarativeWarning
 
 
 @rate_limiter(max_calls=1, interval=1, reject=False)
@@ -130,4 +131,17 @@ def test_double_decoration():
 
     assert (
         str(exc.value) == "Cannot decorate function with @rate_limiter twice"
+    )
+
+
+def test_unsupported_func_decorated():
+    with pytest.warns(DeclarativeWarning) as record:
+
+        @rate_limiter(max_calls=1, interval=1, reject=False)
+        def func():
+            ...
+
+    assert str(record[0].message) == (
+        "rate_limiter decorator is ignored because "
+        "not applied to endpoint declaration."
     )

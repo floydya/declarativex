@@ -14,7 +14,6 @@ from typing import (
     TypeVar,
     Union,
     get_args,
-    get_origin,
 )
 
 from pydantic import BaseModel
@@ -25,10 +24,11 @@ from .exceptions import (
     DependencyValidationError,
     MisconfiguredException,
 )
+from .validation import _validate_type_hint
 from .warnings import warn_no_type_hint
 
 if TYPE_CHECKING:
-    from .models import RawRequest
+    from .models import RawRequest, GraphQLConfiguration
 
 
 Value = TypeVar("Value")
@@ -103,44 +103,10 @@ class Dependency(abc.ABC):
         :return: The value if it is valid.
         """
         if self.type_hint:
-            return self.__validate_type_hint(value)
+            return _validate_type_hint(self.type_hint, value)
         # If no type hint is provided, we can't validate the value.
         # We show a warning instead and return the original value.
         warn_no_type_hint(self.field_name)
-        return value
-
-    def __validate_type_hint(self, value: Any) -> Any:
-        """
-        Validate the value against the type hint.
-        :param value: The value to validate.
-        :return: The value if it is valid.
-        """
-        if get_origin(self.type_hint) is Union:
-            # To check union type hints we need to obtain the Union args.
-            return self.__validate_union_type_hint(value)
-        if not isinstance(value, self.type_hint):  # type: ignore[arg-type]
-            # If the value is not an instance of the type hint, we raise a
-            # DependencyValidationError.
-            raise DependencyValidationError(
-                expected_type=self.type_hint,  # type: ignore[arg-type]
-                received_type=type(value),
-            )
-        # If the value is valid, we return it.
-        return value
-
-    def __validate_union_type_hint(self, value: Any) -> Any:
-        """
-        Validate the value against a union type hint.
-        :param value: The value to validate.
-        :return: The value if it is valid.
-        """
-        args = get_args(self.type_hint)
-        # Checking if the value is an instance of the union args.
-        if not any(isinstance(value, arg) for arg in args):
-            raise DependencyValidationError(
-                expected_type=args, received_type=type(value)
-            )
-        # If the value is valid, we return it.
         return value
 
     def modify_request(self, request: "RawRequest") -> "RawRequest":
@@ -166,11 +132,13 @@ class Path(Dependency):
     Dependency for path parameters. Path parameters are
     extracted from the URL template.
     """
+
     location = Location.path_params
 
 
 class Query(Dependency):
     """Dependency for query parameters."""
+
     location = Location.query_params
 
 
@@ -179,6 +147,7 @@ class Header(Dependency):
     Dependency for headers. The field name is mandatory for headers.
     The field name is converted to lowercase automatically.
     """
+
     location = Location.headers
 
     def __init__(self, *, name: str):
@@ -188,11 +157,13 @@ class Header(Dependency):
 
 class Cookie(Dependency):
     """Dependency for cookies."""
+
     location = Location.cookies
 
 
 class JsonField(Dependency):
     """Dependency for JSON fields."""
+
     location = Location.json
 
 
@@ -201,6 +172,7 @@ class Json(Dependency):
     Dependency for JSON. The value can be a BaseModel,
     a dataclass, a dict or a JSON string.
     """
+
     location = Location.json
 
     def __init__(self):
@@ -245,6 +217,7 @@ class Timeout(Dependency):
     """
     Dependency for timeouts. The value is the timeout in seconds.
     """
+
     location = Location.timeout
 
     def modify_request(self, request: "RawRequest") -> "RawRequest":
@@ -262,6 +235,7 @@ class RequestModifier:
     Class for modifying requests. This class is used internally by
     declarativex.
     """
+
     @staticmethod
     def __extract_variables_from_url_template(url_template: str) -> List[str]:
         """
@@ -275,7 +249,11 @@ class RequestModifier:
 
     @classmethod
     def prepare_request(
-        cls, request: "RawRequest", func: Callable, **values
+        cls,
+        request: "RawRequest",
+        func: Callable,
+        gql: Optional["GraphQLConfiguration"] = None,
+        **values,
     ) -> "RawRequest":
         """
         Prepare a request for sending. This method is used internally by
@@ -284,13 +262,21 @@ class RequestModifier:
         against the type hints.
         :param request: The request to prepare.
         :param func: The function that is called.
+        :param gql: The GraphQL configuration.
         :param values: The values to set the dependencies to.
         :return: The prepared request.
         """
         signature = inspect.signature(func)
-        url_template_variables = cls.__extract_variables_from_url_template(
-            request.url_template
-        )
+        if gql:
+            from .graphql import extract_variables_from_gql_query
+
+            url_template_variables = extract_variables_from_gql_query(
+                gql.query
+            )
+        else:
+            url_template_variables = cls.__extract_variables_from_url_template(
+                request.url_template
+            )
         dependencies = []
         for key, val in signature.parameters.items():
             if key in ["self", "cls"]:
@@ -321,7 +307,10 @@ class RequestModifier:
             elif key in url_template_variables:
                 # If the parameter is in the URL template and not annotated,
                 # we assume it is a Path dependency.
-                dependency = Path()
+                if gql:
+                    dependency = JsonField()
+                else:
+                    dependency = Path()
                 dependency.type_hint = annotation
             else:
                 # If the parameter is not annotated and not in the URL
@@ -360,4 +349,5 @@ __all__ = [
     "Json",
     "Timeout",
     "RequestModifier",
+    "Location",
 ]

@@ -25,18 +25,35 @@ And boom! You're good to go.
 
 Ready to dive in? Here's a quick example to get you started:
 
-```{.python title="my_client.py"}
-from declarativex import BaseClient, http
+=== "Sync"
+    ```{.python title="my_client.py"}
+    from declarativex import BaseClient, http
+    
+    
+    @http("GET", "/users/{user_id}", "https://example.com")
+    def get_user(user_id: int) -> dict:
+        ...
+    
+    
+    response = get_user(user_id=1)
+    print(response)
+    ```
 
-
-@http("GET", "/users/{user_id}", "https://example.com")
-def get_user(user_id: int) -> dict:
-    ...
-
-
-response = get_user(user_id=1)
-print(response)
-```
+=== "Async"
+    ```{.python title="my_client.py"}
+    import asyncio
+    
+    from declarativex import BaseClient, http
+    
+    
+    @http("GET", "/users/{user_id}", "https://example.com")
+    async def get_user(user_id: int) -> dict:
+        ...
+    
+    
+    response = asyncio.run(get_user(user_id=1))
+    print(response)
+    ```
 
 !!! success "You should see the following output:"
     ```
@@ -45,6 +62,11 @@ print(response)
       "name": "John Doe"
     }
     ```
+
+!!! tip "Async"
+    DeclarativeX supports both synchronous and asynchronous HTTP requests. Just define your function as `async` and
+    you're good to go.
+
 
 See? No fuss, just clean and straightforward code.
 
