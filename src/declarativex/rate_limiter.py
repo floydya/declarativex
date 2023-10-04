@@ -3,7 +3,7 @@ import time
 from typing import Callable, Union, Awaitable
 
 from .exceptions import RateLimitExceeded
-from .utils import ReturnType, DeclaredDecorator
+from .utils import ReturnType, SupportDecorator
 
 
 class Bucket:
@@ -28,7 +28,7 @@ class Bucket:
         self.last_time_token_added = 0.0
 
 
-class rate_limiter(DeclaredDecorator):
+class rate_limiter(SupportDecorator):
     def __init__(self, max_calls: int, interval: float, reject: bool = False):
         self._bucket = Bucket(max_calls, interval)
         self._reject = reject

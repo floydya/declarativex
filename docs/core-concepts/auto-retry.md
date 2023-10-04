@@ -34,4 +34,3 @@ from declarativex import retry, http, TimeoutException
 def get():
     pass
 ```
-

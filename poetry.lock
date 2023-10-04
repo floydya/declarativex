@@ -538,6 +538,19 @@ python-dateutil = ">=2.8.1"
 dev = ["flake8", "markdown", "twine", "wheel"]
 
 [[package]]
+name = "graphql-py"
+version = "0.8.1"
+description = "graphql-py: Parser for latest GraphQL specification"
+optional = true
+python-versions = "*"
+files = [
+    {file = "graphql-py-0.8.1.tar.gz", hash = "sha256:a03557d67817a0f23c5bef83ce8791c8fa3f5f9d165e1408abc6393def1d720c"},
+]
+
+[package.dependencies]
+ply = ">=3.6"
+
+[[package]]
 name = "h11"
 version = "0.14.0"
 description = "A pure-Python, bring-your-own-I/O implementation of HTTP/1.1"
@@ -1054,6 +1067,17 @@ files = [
 [package.extras]
 dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
+
+[[package]]
+name = "ply"
+version = "3.11"
+description = "Python Lex & Yacc"
+optional = true
+python-versions = "*"
+files = [
+    {file = "ply-3.11-py2.py3-none-any.whl", hash = "sha256:096f9b8350b65ebd2fd1346b12452efe5b9607f7482813ffca50c22722a807ce"},
+    {file = "ply-3.11.tar.gz", hash = "sha256:00c7c1aaa88358b9c765b6d3000c6eec0ba42abca5351b095321aef446081da3"},
+]
 
 [[package]]
 name = "pycodestyle"
@@ -1799,9 +1823,10 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 
 [extras]
 brotli = ["brotli", "brotlicffi"]
+graphql = ["graphql-py"]
 http2 = ["h2"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "ba1c9e73eed7188731b6083a05bb50430e8dbbd22914003c94ffaf828b9dbcc7"
+content-hash = "39596bc7460d4a50d173fea0733749ab4d72816fe14517559a14e2e21147ba9a"

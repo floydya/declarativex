@@ -107,7 +107,9 @@ class Executor(abc.ABC):
         """
         self.raw_request = RawRequest.initialize(
             self.endpoint_configuration
-        ).prepare(self.func, **kwargs)
+        ).prepare(
+            self.func, gql=self.endpoint_configuration.gql, **kwargs
+        )
 
     def parse_response(
         self,
@@ -255,9 +257,7 @@ class SyncExecutor(Executor):
         return client.send(request)
 
     def _execute(self, request: RawRequest):
-        with httpx.Client(
-            follow_redirects=True, http2=bool(h2)
-        ) as client:
+        with httpx.Client(follow_redirects=True, http2=bool(h2)) as client:
             httpx_request = request.to_httpx_request()
             httpx_response = self.wait_for(
                 client=client, request=httpx_request

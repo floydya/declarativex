@@ -20,8 +20,11 @@ We handle the nitty-gritty so you can focus on what really counts—your core lo
 - **Data Validation**: Using Pydantic? We've got your robust validation needs covered.
 - **Async Ready**: Need it fast? We're async-compatible.
 - **Rate Limiting**: Stay on the good side of APIs with built-in rate limiting.
+- **Authentication**: Add authentication with a single line of code.
+- **Automatic Retries**: We retry failed requests automatically(or reject, if you prefer).
 - **Middleware Support**: Add your custom logic with ease.
 - **Auto Body Parsing**: Skip manual parsing. Use a dataclass or Pydantic model for auto-magic.
+- **GraphQL**: We support GraphQL queries and mutations out of the box.
 
 ## Installation 🛠️
 

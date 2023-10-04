@@ -67,6 +67,7 @@ attribute.
 ```python
 __init__(
     base_url: Optional[str] = None,
+    auth: Optional[Auth] = None,
     default_query_params: Dict[str, Any] = < factory >,
     default_headers: Dict[str, str] = < factory >,
     middlewares: Sequence[Union[Middleware, AsyncMiddleware]] = < factory >,
