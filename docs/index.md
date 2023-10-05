@@ -31,11 +31,12 @@ DeclarativeX comes with a few extras that you can install separately. Here's a l
 
 To install an extra, just add it to the end of the command:
 
-=== All
+=== "All"
     ```bash
     pip install declarativex[http2,graphql,brotli]
     ```
-=== Only one
+
+=== "Only one"
     ```bash
     pip install declarativex[http2]
     ```

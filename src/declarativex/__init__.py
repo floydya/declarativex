@@ -20,7 +20,7 @@ from .exceptions import (
     UnprocessableEntityException,
     RateLimitExceeded,
 )
-from .methods import http
+from .methods import http, gql
 from .middlewares import Middleware
 from .rate_limiter import rate_limiter
 from .retry import retry
