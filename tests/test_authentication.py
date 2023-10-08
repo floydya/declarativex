@@ -1,3 +1,5 @@
+from typing import List, Coroutine, Callable
+
 import pytest
 
 from declarativex import BaseClient, http, Middleware
@@ -38,11 +40,13 @@ class Client(BaseClient):
         auth=BasicAuth("username", "password"),
         middlewares=[
             AsyncTestMiddleware(
-                Location.headers, "Authorization", "dXNlcm5hbWU6cGFzc3dvcmQ="
+                Location.headers,
+                "Authorization",
+                "Basic dXNlcm5hbWU6cGFzc3dvcmQ=",
             )
         ],
     )
-    async def get_posts(self) -> dict:
+    async def get_posts(self) -> List[dict]:
         ...
 
     @http(
@@ -55,7 +59,7 @@ class Client(BaseClient):
             )
         ],
     )
-    async def get_posts_with_bearer(self) -> dict:
+    async def get_posts_with_bearer(self) -> List[dict]:
         ...
 
     @http(
@@ -66,7 +70,7 @@ class Client(BaseClient):
             AsyncTestMiddleware(Location.headers, "X-Auth", "token12345")
         ],
     )
-    async def get_posts_with_custom_auth(self) -> dict:
+    async def get_posts_with_custom_auth(self) -> List[dict]:
         ...
 
     @http(
@@ -79,16 +83,22 @@ class Client(BaseClient):
             )
         ],
     )
-    async def get_posts_with_key_in_query(self) -> dict:
+    async def get_posts_with_key_in_query(self) -> List[dict]:
         ...
 
 
 client = Client()
 
 
+@pytest.mark.parametrize(
+    'coro',
+    [
+        client.get_posts,
+        client.get_posts_with_bearer,
+        client.get_posts_with_custom_auth,
+        client.get_posts_with_key_in_query,
+    ]
+)
 @pytest.mark.asyncio
-async def test_auth():
-    await client.get_posts()
-    await client.get_posts_with_bearer()
-    await client.get_posts_with_custom_auth()
-    await client.get_posts_with_key_in_query()
+async def test_auth(coro: Callable[..., Coroutine]):
+    await coro()

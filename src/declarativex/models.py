@@ -214,8 +214,8 @@ class ClientConfiguration:
         take precedence over the values of this configuration.
         """
         return ClientConfiguration(
-            base_url=other.base_url or self.base_url,
-            auth=other.auth or self.auth,
+            base_url=self.base_url if self.base_url else other.base_url,
+            auth=self.auth if self.auth else other.auth,
             default_query_params={
                 **other.default_query_params,
                 **self.default_query_params,

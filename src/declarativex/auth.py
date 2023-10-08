@@ -41,9 +41,10 @@ class BasicAuth(Auth):
     key = "Authorization"
 
     def __init__(self, username: str, password: str):
-        self.value = base64.b64encode(
+        b64encoded = base64.b64encode(
             f"{username}:{password}".encode("utf-8")
         ).decode("utf-8")
+        self.value = f"Basic {b64encoded}"
 
 
 class BearerAuth(Auth):
