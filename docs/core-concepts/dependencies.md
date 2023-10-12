@@ -155,6 +155,42 @@ def create_baz(
 
 There you go, you've put it to use. Happy now? 😄
 
+
+## FormField 📝
+
+The same as `JsonField`, but for form data.
+
+```.py title="my_client.py" hl_lines="1 11 12"
+from typing import Annotated
+
+from declarativex import http, FormField
+
+
+@http("POST", "/bar")
+def create_baz(
+    foo: Annotated[str, FormField], 
+    baz: Annotated[str, FormField],
+) -> dict:
+    ...
+```
+
+## FormData 📄
+
+The same as `Json`, but for form data.
+
+```.py title="my_client.py" hl_lines="1 8"
+from typing import Annotated
+
+from declarativex import http, FormData
+
+
+@http("POST", "/bar")
+def create_baz(
+    data: Annotated[dict, FormData]
+) -> dict:
+    ...
+```
+
 ## Header 🎩
 
 The difference between `Header` and any other dependency is that `Header` has only a `name` param. 

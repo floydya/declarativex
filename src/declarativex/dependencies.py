@@ -43,6 +43,7 @@ class Location(str, enum.Enum):
     cookies = "cookies"
     json = "json"
     timeout = "timeout"
+    data = "data"
 
 
 class Dependency(abc.ABC):
@@ -54,6 +55,7 @@ class Dependency(abc.ABC):
     :type field_name: str
     """
 
+    _http_method_whitelist = ["GET", "POST", "PUT", "PATCH", "DELETE"]
     location: Location
     _field_name: str
     _value: Any
@@ -65,6 +67,19 @@ class Dependency(abc.ABC):
         field_name: Union[str, None] = None,
     ):
         self._overridden_field_name = field_name
+
+    @classmethod
+    def is_available_for_method(cls, method: str):
+        """
+        Check if the dependency is available for the method.
+        :param method: The method to check.
+        :return: True if the dependency is available for the method.
+        """
+        if method not in cls._http_method_whitelist:
+            raise MisconfiguredException(
+                f"{cls.__name__} dependency is not "
+                f"available for {method} method."
+            )
 
     @property
     def type_hint(self) -> Union[Type[Value], None]:
@@ -164,16 +179,24 @@ class Cookie(Dependency):
 class JsonField(Dependency):
     """Dependency for JSON fields."""
 
+    _http_method_whitelist = ["POST", "PUT", "PATCH"]
     location = Location.json
 
 
-class Json(Dependency):
+class FormField(Dependency):
+    """Dependency for form fields."""
+
+    _http_method_whitelist = ["POST", "PUT", "PATCH"]
+    location = Location.data
+
+
+class FullReplacementDependency(Dependency):
     """
     Dependency for JSON. The value can be a BaseModel,
     a dataclass, a dict or a JSON string.
     """
 
-    location = Location.json
+    _http_method_whitelist = ["POST", "PUT", "PATCH"]
 
     def __init__(self):
         """Field name is unused for Json."""
@@ -211,6 +234,14 @@ class Json(Dependency):
                 ) from exc
         setattr(request, self.location.value, data)
         return request
+
+
+class Json(FullReplacementDependency):
+    location = Location.json
+
+
+class FormData(FullReplacementDependency):
+    location = Location.data
 
 
 class Timeout(Dependency):
@@ -318,20 +349,12 @@ class RequestModifier:
                 dependency = Query()
                 dependency.type_hint = annotation
 
+            dependency.is_available_for_method(request.method)
+
             # We set the field name and the value of the dependency.
             dependency.field_name = key
             dependency.value = values.get(key, val.default)
             dependencies.append(dependency)
-
-        # We check if the request method is GET and if there are any Json
-        # dependencies. If there are, we raise a MisconfiguredException.
-        if request.method == "GET" and any(
-            isinstance(dependency, (JsonField, Json))
-            for dependency in dependencies
-        ):
-            raise MisconfiguredException(
-                "BodyField and Json fields are not supported for GET requests"
-            )
 
         # Modifying the request according to the dependencies in loop.
         for dependency in dependencies:
@@ -347,6 +370,8 @@ __all__ = [
     "Cookie",
     "JsonField",
     "Json",
+    "FormField",
+    "FormData",
     "Timeout",
     "RequestModifier",
     "Location",
