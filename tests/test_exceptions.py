@@ -140,7 +140,8 @@ def test_endpoint_default_empty_value():
 def test_get_endpoint_with_json_in_args(dependency):
     @http("get", "/posts", base_url="https://jsonplaceholder.typicode.com/")
     def get_posts(
-        json: Annotated[dict, dependency], userId: Optional[int] = None,
+        data: Annotated[dict, dependency],
+        userId: Optional[int] = None,
     ) -> List[dict]:
         pass
 
@@ -148,7 +149,8 @@ def test_get_endpoint_with_json_in_args(dependency):
         get_posts({"test": "test"}, 1)
 
     assert (
-        "BodyField and Json fields are not supported for GET requests"
+        f"{dependency.__name__} dependency is not "
+        "available for GET method."
         == str(exc.value)
     )
 

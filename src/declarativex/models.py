@@ -296,6 +296,7 @@ class RawRequest:
     headers: Dict[str, str] = dataclasses.field(default_factory=dict)
     cookies: Dict[str, str] = dataclasses.field(default_factory=dict)
     json: Dict[str, Any] = dataclasses.field(default_factory=dict)
+    data: Dict[str, Any] = dataclasses.field(default_factory=dict)
     timeout: Optional[float] = None
     _gql: Optional[GraphQLConfiguration] = None
 
@@ -351,8 +352,9 @@ class RawRequest:
         return httpx.Request(
             method=self.method,
             url=self.url(),
-            params=self.query_params,
-            headers=self.headers,
-            cookies=self.cookies,
-            json=_json,
+            params=self.query_params if self.query_params else None,
+            headers=self.headers if self.headers else None,
+            cookies=self.cookies if self.cookies else None,
+            json=_json if _json else None,
+            data=self.data if self.data else None,
         )
