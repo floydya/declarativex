@@ -44,6 +44,7 @@ class Location(str, enum.Enum):
     json = "json"
     timeout = "timeout"
     data = "data"
+    files = "files"
 
 
 class Dependency(abc.ABC):
@@ -244,6 +245,15 @@ class FormData(FullReplacementDependency):
     location = Location.data
 
 
+class Files(Dependency):
+    location = Location.files
+    _http_method_whitelist = ["POST", "PUT", "PATCH"]
+
+    def modify_request(self, request: "RawRequest") -> "RawRequest":
+        setattr(request, self.location.value, self.value)
+        return request
+
+
 class Timeout(Dependency):
     """
     Dependency for timeouts. The value is the timeout in seconds.
@@ -372,6 +382,7 @@ __all__ = [
     "Json",
     "FormField",
     "FormData",
+    "Files",
     "Timeout",
     "RequestModifier",
     "Location",

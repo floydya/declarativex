@@ -13,6 +13,8 @@ from typing import (
     get_origin,
     TypeVar,
     get_args,
+    Union,
+    Tuple,
 )
 from urllib.parse import urljoin
 
@@ -306,6 +308,9 @@ class RawRequest:
     cookies: Dict[str, str] = dataclasses.field(default_factory=dict)
     json: Dict[str, Any] = dataclasses.field(default_factory=dict)
     data: Dict[str, Any] = dataclasses.field(default_factory=dict)
+    files: Dict[
+        str, Union[bytes, Tuple[str, bytes], Tuple[str, bytes, str]]
+    ] = dataclasses.field(default_factory=dict)
     timeout: Optional[float] = None
     _gql: Optional[GraphQLConfiguration] = None
 
@@ -366,4 +371,5 @@ class RawRequest:
             cookies=self.cookies if self.cookies else None,
             json=_json if _json else None,
             data=self.data if self.data else None,
+            files=self.files if self.files else None,
         )
