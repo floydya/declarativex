@@ -1,6 +1,7 @@
 import json
 import time
 from json import JSONDecodeError
+from typing import Annotated
 from unittest.mock import Mock, MagicMock
 
 import httpx
@@ -9,6 +10,7 @@ from httpx import Response, Proxy, URL
 from pytest_mock import MockerFixture
 
 from declarativex import http, BaseClient
+from declarativex.dependencies import Files
 from declarativex.exceptions import (
     DependencyValidationError,
     HTTPException,
@@ -307,3 +309,35 @@ def test_proxies(
     client = DummyClient(base_url="https://reqres.in")
     client.get_users()
     assert httpx_client_mock.call_args_list[0][1]["proxies"] == expected
+
+
+def test_files_field(mocker: MockerFixture):
+    httpx_client_mock = mocker.patch(
+        "declarativex.executors.httpx.Client",
+        MagicMock(),
+    )
+    send_mock = httpx_client_mock.return_value.__enter__.return_value = Mock(
+        send=Mock(
+            return_value=Response(
+                200,
+                json={"dummy": "data"},
+                request=Mock(
+                    wraps=httpx.Request("GET", "https://reqres.in/api/users")
+                ),
+            )
+        )
+    )
+
+    @http("POST", "api/users", base_url="https://reqres.in")
+    def get_users(files: Annotated[dict, Files]) -> dict:
+        ...
+
+    file = open("tests/fixtures/__init__.py", "rb")
+    file_content = file.read()
+    file.seek(0)
+    get_users(files={"file": file})
+    assert (
+        "multipart/form-data"
+        in send_mock.send.call_args_list[0].args[0].headers["content-type"]
+    )
+    assert file_content in send_mock.send.call_args_list[0].args[0].read()

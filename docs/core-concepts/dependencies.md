@@ -191,6 +191,30 @@ def create_baz(
     ...
 ```
 
+## Files 📁
+
+You can use them like this:
+
+```.py title="my_client.py" hl_lines="1 8"
+from typing import Annotated
+
+from declarativex import http, Files
+
+
+@http("POST", "/bar")
+def create_baz(
+    files: Annotated[dict, Files]
+) -> dict:
+    ...
+
+
+create_baz(files={"file": open("file.txt", "rb")})
+# Or:
+create_baz(files={"file": ("file.txt", open("file.txt", "rb"))})
+# Or:
+create_baz(files={"file": ("file.txt", open("file.txt", "rb"), "text/plain")})
+```
+
 ## Header 🎩
 
 The difference between `Header` and any other dependency is that `Header` has only a `name` param. 
