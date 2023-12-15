@@ -50,6 +50,7 @@ class Middleware(abc.ABC, metaclass=Signature):
     modify the request before it is passed to the next middleware or the
     endpoint.
     """
+
     @abc.abstractmethod
     def __call__(
         self,

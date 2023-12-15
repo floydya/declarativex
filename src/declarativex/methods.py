@@ -15,7 +15,7 @@ from .models import (
     EndpointConfiguration,
     GraphQLConfiguration,
 )
-from .utils import Decorator
+from .utils import Decorator, ProxiesType
 
 
 class _Declaration(Decorator):
@@ -46,6 +46,7 @@ class http(_Declaration):
         default_headers: Optional[Dict[str, str]] = None,
         middlewares: Optional[Sequence[Middleware]] = None,
         error_mappings: Optional[Dict[int, Type]] = None,
+        proxies: ProxiesType = None,
     ):
         self.client_configuration = ClientConfiguration.create(
             base_url=base_url,
@@ -54,6 +55,7 @@ class http(_Declaration):
             default_headers=default_headers,
             middlewares=middlewares,
             error_mappings=error_mappings,
+            proxies=proxies,
         )
 
         self.endpoint_configuration = EndpointConfiguration(
@@ -76,6 +78,7 @@ class gql(_Declaration):
         default_headers: Optional[Dict[str, str]] = None,
         middlewares: Optional[Sequence[Middleware]] = None,
         error_mappings: Optional[Dict[int, Type]] = None,
+        proxies: ProxiesType = None,
     ):
         try:
             from graphql.parser import GraphQLParser  # type: ignore  # noqa: F401, E501
@@ -92,6 +95,7 @@ class gql(_Declaration):
             default_headers=default_headers,
             middlewares=middlewares,
             error_mappings=error_mappings,
+            proxies=proxies,
         )
 
         self.endpoint_configuration = EndpointConfiguration(

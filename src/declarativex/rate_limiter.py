@@ -41,17 +41,14 @@ class rate_limiter(SupportDecorator):
         async with self._lock:
             try:
                 elapsed = (
-                    self._loop.time()
-                    - self._bucket.last_time_token_added
+                    self._loop.time() - self._bucket.last_time_token_added
                 )
                 self._bucket.token_bucket = min(
                     self._bucket.token_bucket
                     + elapsed * self._bucket.token_fill_rate,
                     self._bucket.max_calls,
                 )
-                self._bucket.last_time_token_added = (
-                    self._loop.time()
-                )
+                self._bucket.last_time_token_added = self._loop.time()
 
                 # check if we have to wait for a function call
                 # (min 1 token in order to make a call)

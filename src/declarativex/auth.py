@@ -13,7 +13,7 @@ class Auth(abc.ABC):
     key: str
     value: str
 
-    def apply_auth(self, request: 'RawRequest') -> 'RawRequest':
+    def apply_auth(self, request: "RawRequest") -> "RawRequest":
         obj = getattr(request, self.location.value)
         obj[self.key] = self.value
         setattr(request, self.location.value, obj)

@@ -81,6 +81,7 @@ whether they're required or optional, and what each argument is for.
 | `default_query_params` |                `#!python dict`                 |    No, default: `#!python None`     |    Keyword     | The params to use with every request.                              |
 |     `middlewares`      | `#!python list`  |    No, default: `#!python None`     |    Keyword     | The [middlewares](middlewares.md) to use with every request.       |
 |    `error_mappings`    | `#!python dict`  |    No, default: `#!python None`     |    Keyword     | The [error mappings](error-mappings.md) to use with every request. |
+| `proxies` | `#!python dict | str | None | URL | Proxy` |   No, default: `#!python None`     |    Keyword     | The [proxies](https://www.python-httpx.org/advanced/#http-proxying) to use with every request. |
 
 <div id="base_url" markdown>
 !!! danger "`base_url`"

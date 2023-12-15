@@ -3,6 +3,7 @@ from typing import Dict, Optional, Sequence, Type
 from .auth import Auth
 from .exceptions import MisconfiguredException
 from .middlewares import Middleware
+from .utils import ProxiesType
 
 
 class BaseClient:
@@ -15,6 +16,7 @@ class BaseClient:
         default_query_params: Default query parameters for the client.
         middlewares: List of middlewares for the client.
         error_mappings: Mapping of status codes to exceptions.
+        proxies: Proxy configuration for the client.
     """
 
     base_url: str = ""
@@ -23,6 +25,7 @@ class BaseClient:
     default_query_params: Dict[str, str] = {}
     middlewares: Sequence[Middleware] = []
     error_mappings: Dict[int, Type] = {}
+    proxies: ProxiesType = None
 
     def __init__(
         self,
@@ -32,6 +35,7 @@ class BaseClient:
         default_query_params: Optional[Dict[str, str]] = None,
         middlewares: Optional[Sequence[Middleware]] = None,
         error_mappings: Optional[Dict[int, Type]] = None,
+        proxies: ProxiesType = None,
     ) -> None:
         self.base_url = base_url or self.base_url
         if not self.base_url:
@@ -43,6 +47,7 @@ class BaseClient:
         )
         self.middlewares = middlewares or self.middlewares
         self.error_mappings = error_mappings or self.error_mappings
+        self.proxies = proxies or self.proxies
 
 
 __all__ = ["BaseClient"]
