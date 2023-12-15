@@ -18,9 +18,7 @@ class retry(SupportDecorator):
         self._backoff_factor = backoff_factor
         self._exceptions = exceptions
 
-    async def _decorate_async(
-        self, func: Callable, *args, **kwargs
-    ):
+    async def _decorate_async(self, func: Callable, *args, **kwargs):
         retries = 0
         current_delay = self._delay
         while retries <= self._max_retries:
@@ -34,9 +32,7 @@ class retry(SupportDecorator):
                 current_delay *= self._backoff_factor
         return None  # pragma: no cover
 
-    def _decorate_sync(
-        self, func: Callable, *args, **kwargs
-    ):
+    def _decorate_sync(self, func: Callable, *args, **kwargs):
         retries = 0
         current_delay = self._delay
         while retries <= self._max_retries:

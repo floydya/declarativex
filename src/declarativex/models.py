@@ -24,7 +24,12 @@ from .compatibility import parse_obj_as
 from .dependencies import RequestModifier
 from .exceptions import MisconfiguredException, UnprocessableEntityException
 from .middlewares import Middleware
-from .utils import ReturnType, SUPPORTED_METHODS
+from .utils import (
+    ReturnType,
+    SUPPORTED_METHODS,
+    merge_proxies,
+    ProxiesType,
+)
 from .warnings import warn_list_return_type
 
 T = TypeVar("T")
@@ -155,6 +160,7 @@ class ClientConfiguration:
     error mappings. The configuration can be passed to the client as a
     parameter or as a class attribute.
     """
+
     base_url: Optional[str] = dataclasses.field(default=None)
     auth: Optional[Auth] = None
     default_query_params: Dict[str, Any] = dataclasses.field(
@@ -163,6 +169,7 @@ class ClientConfiguration:
     default_headers: Dict[str, str] = dataclasses.field(default_factory=dict)
     middlewares: Sequence[Middleware] = dataclasses.field(default_factory=list)
     error_mappings: Dict[int, Type] = dataclasses.field(default_factory=dict)
+    proxies: ProxiesType = dataclasses.field(default=None)
 
     def __post_init__(self):
         """
@@ -205,6 +212,7 @@ class ClientConfiguration:
                 default_headers=cls_instance.default_headers,
                 middlewares=cls_instance.middlewares,
                 error_mappings=cls_instance.error_mappings,
+                proxies=cls_instance.proxies,
             )
         return None
 
@@ -223,6 +231,7 @@ class ClientConfiguration:
             default_headers={**other.default_headers, **self.default_headers},
             middlewares=[*other.middlewares, *self.middlewares],
             error_mappings={**other.error_mappings, **self.error_mappings},
+            proxies=merge_proxies(other.proxies, self.proxies),
         )
 
     @classmethod

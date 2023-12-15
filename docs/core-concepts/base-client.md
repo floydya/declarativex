@@ -290,6 +290,10 @@ You can use `pydantic.BaseModel`, `dataclass` or `TypedDict` to parse the respon
 !!! tip
     More information you can find in the [Error mappings](./error-mappings.md) section.
 
+### `proxies`
+
+Refer to this documentation to be able to use proxies: [HTTP proxying](https://www.python-httpx.org/advanced/#http-proxying)
+
 
 ## Wrapping Up
 

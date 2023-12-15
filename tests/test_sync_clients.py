@@ -1,10 +1,14 @@
 import json
 import time
 from json import JSONDecodeError
+from unittest.mock import Mock, MagicMock
 
 import httpx
 import pytest
+from httpx import Response, Proxy, URL
+from pytest_mock import MockerFixture
 
+from declarativex import http, BaseClient
 from declarativex.exceptions import (
     DependencyValidationError,
     HTTPException,
@@ -227,3 +231,79 @@ def test_sync_register(client, response_type, error_type):
         assert exc.value.response.error == (
             "Note: Only defined users succeed registration"
         )
+
+
+@pytest.mark.parametrize(
+    "class_proxies,method_proxies,expected",
+    [
+        (
+            {"http://": "http://127.0.0.1:2023"},
+            {"https://": "https://127.0.0.1:2024"},
+            {
+                "http://": "http://127.0.0.1:2023",
+                "https://": "https://127.0.0.1:2024",
+            },
+        ),
+        (
+            "http://127.0.0.1:2020",
+            {"all://": "http://127.0.0.1:2021"},
+            {
+                "all://": "http://127.0.0.1:2021",
+            },
+        ),
+        (
+            {"all://": "http://127.0.0.1:2021"},
+            "http://127.0.0.1:2022",
+            {"all://": "http://127.0.0.1:2022"},
+        ),
+        (
+            Proxy(url="http://127.0.0.1:2012"),
+            URL(url="http://127.0.0.2:2013"),
+            {"all://": "http://127.0.0.2:2013"},
+        ),
+        (
+            URL(url="http://127.0.0.2:2013"),
+            None,
+            URL(url="http://127.0.0.2:2013"),
+        ),
+        (
+            "http://127.0.0.1:2022",
+            Proxy(url="http://127.0.0.1:2012"),
+            {"all://": "http://127.0.0.1:2012"},
+        ),
+        (
+            URL(url="http://127.0.0.2:2013"),
+            URL(url="http://127.0.0.2:2014"),
+            {"all://": "http://127.0.0.2:2014"},
+        ),
+    ],
+)
+def test_proxies(
+    class_proxies, method_proxies, expected, mocker: MockerFixture
+):
+    httpx_client_mock = mocker.patch(
+        "declarativex.executors.httpx.Client",
+        MagicMock(),
+    )
+    httpx_client_mock.return_value.__enter__.return_value = Mock(
+        send=Mock(
+            return_value=Response(
+                200,
+                json={"dummy": "data"},
+                request=Mock(
+                    wraps=httpx.Request("GET", "https://reqres.in/api/users")
+                ),
+            )
+        )
+    )
+
+    class DummyClient(BaseClient):
+        proxies = class_proxies
+
+        @http("GET", "api/users", proxies=method_proxies)
+        def get_users(self) -> dict:
+            ...
+
+    client = DummyClient(base_url="https://reqres.in")
+    client.get_users()
+    assert httpx_client_mock.call_args_list[0][1]["proxies"] == expected

@@ -24,6 +24,7 @@ class AnnotationException(MisconfiguredException):
     Parameters:
         annotation(`Type`): The annotation that was used.
     """
+
     def __init__(self, annotation: Type):
         super().__init__(
             f"Annotation {annotation} is not supported. "
@@ -40,6 +41,7 @@ class DependencyValidationError(DeclarativeException):
             The dependency that failed validation.
         received_type(`Type`): The type that was received.
     """
+
     @classmethod
     def _name_accessor(cls, entity: Any) -> str:  # pragma: no cover
         if hasattr(entity, "__name__"):
@@ -53,9 +55,7 @@ class DependencyValidationError(DeclarativeException):
         message = f"Value of type {received_type.__name__} is not supported. "
         if isinstance(expected_type, Iterable):
             names = [self._name_accessor(arg) for arg in expected_type]
-            message += (
-                f"Expected one of: {names}."
-            )
+            message += f"Expected one of: {names}."
         else:
             message += f"Expected type: {self._name_accessor(expected_type)}."
         if self._is_none:
@@ -80,6 +80,7 @@ class TimeoutException(DeclarativeException):
         timeout(`Optional[float]`): The timeout in seconds.
         request(`httpx.Request`): The request that timed out.
     """
+
     def __init__(self, timeout: Union[float, None], request: httpx.Request):
         super().__init__(
             f"Request timed out after {timeout} seconds: "
@@ -98,6 +99,7 @@ class HTTPException(DeclarativeException):
         error_mappings(`Mapping[int, Type]`):
             A mapping of status codes to error models.
     """
+
     raw_request: "RawRequest"
     status_code: int
     _response: httpx.Response
@@ -140,6 +142,7 @@ class UnprocessableEntityException(DeclarativeException):
     Parameters:
         response(`httpx.Response`): The response that was received.
     """
+
     def __init__(self, response: httpx.Response):
         self.response = response
         super().__init__(

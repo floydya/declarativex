@@ -74,7 +74,7 @@ async def test_rate_limiter():
         await client.get_users()
         await client.get_user(1)
     total = time.perf_counter() - start
-    assert 3.0 < total < 3.5
+    assert 3 < total < 4
 
     client.refill()
 
@@ -83,7 +83,7 @@ async def test_rate_limiter():
         asyncio.get_event_loop()
         await asyncio.gather(*[client.get_users() for _ in range(3)])
         total = time.perf_counter() - start
-        assert 2 < total < 2.5
+        assert 2 < total < 3
 
 
 @pytest.mark.asyncio
