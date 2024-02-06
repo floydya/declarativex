@@ -146,6 +146,21 @@ def test_sync_delete_user(client):
 
 
 @pytest.mark.parametrize(
+    "client",
+    [
+        sync_dataclass_client,
+        sync_pydantic_client,
+        sync_dictionary_client,
+    ],
+)
+def test_sync_delete_user_type_hinted_method(client):
+    response = client.delete_user_explicit_typehint(1)
+    assert isinstance(response, httpx.Response)
+    assert response.status_code == 204
+    assert response.text == ""
+
+
+@pytest.mark.parametrize(
     "client,response_type",
     [
         (sync_dataclass_client, dataclass.PaginatedResponse),

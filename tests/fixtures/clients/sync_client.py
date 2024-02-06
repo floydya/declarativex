@@ -1,6 +1,8 @@
 from typing import Annotated
 from typing import Union
 
+import httpx
+
 from declarativex import (
     BaseClient,
     JsonField,
@@ -72,6 +74,12 @@ for schema in [dataclass, pydantic, None]:
 
         @http("DELETE", "api/users/{user_id}")
         def delete_user(self, user_id: int):
+            ...
+
+        @http("DELETE", "api/users/{user_id}")
+        def delete_user_explicit_typehint(
+            self, user_id: int
+        ) -> httpx.Response:
             ...
 
         @http("GET", "api/{resource}")

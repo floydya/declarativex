@@ -112,7 +112,11 @@ class Response:
         pydantic models, dictionaries and lists of them.
         """
         self.response.raise_for_status()
-        if type_hint is None or type_hint is inspect.Signature.empty:
+        if (
+            type_hint is None
+            or type_hint is inspect.Signature.empty
+            or type_hint is httpx.Response
+        ):
             # If the type hint is None or inspect.Signature.empty, return the
             # httpx.Response as is.
             return self.response

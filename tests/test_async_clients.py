@@ -146,6 +146,21 @@ async def test_async_delete_user(client):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
+    "client",
+    [
+        async_dataclass_client,
+        async_pydantic_client,
+        async_dictionary_client,
+    ],
+)
+async def test_async_delete_user_type_hinted_method(client):
+    response = await client.delete_user_explicit_typehint(1)
+    assert isinstance(response, httpx.Response)
+    assert response.status_code == 204
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
     "client,response_type",
     [
         (async_dataclass_client, dataclass.PaginatedResponse),
