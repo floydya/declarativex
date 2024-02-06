@@ -110,6 +110,9 @@ You can use any of the custom dataclasses, Pydantic models or built-in types to 
     If you don't specify a return type, the decorator will return a `httpx.Response` object.
     But, your IDE will not be able to detect the type of the response, so it's recommended to specify the return type.
 
+!!! tip "explicitly specifying httpx.Response return type"
+    Specifying `httpx.Respose` will both return unprocessed `httpx.Response` object and 
+    preserve type hint information for IDE.
 
 ### Class-based declaration
 
