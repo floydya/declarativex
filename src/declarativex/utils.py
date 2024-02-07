@@ -1,5 +1,7 @@
 import abc
 import asyncio
+import sys
+
 from functools import wraps
 from typing import TypeVar, Callable, Union, Any, Dict
 
@@ -7,6 +9,13 @@ from httpx import URL, Proxy
 
 from .exceptions import MisconfiguredException
 from .warnings import warn_support_decorator_ignored
+
+if sys.version_info >= (3, 10):
+    from typing import ParamSpec
+
+    DecoratorArgs = ParamSpec("DecoratorArgs")
+else:
+    DecoratorArgs = ...
 
 ReturnType = TypeVar("ReturnType")
 SUPPORTED_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE"}
@@ -54,8 +63,8 @@ class Decorator(abc.ABC):
         return self.MARK_TEMPLATE.format(cls_name=self.__class__.__name__)
 
     def __call__(
-        self, func: Callable[..., ReturnType]
-    ) -> Callable[..., ReturnType]:
+        self, func: Callable[DecoratorArgs, ReturnType]
+    ) -> Callable[DecoratorArgs, ReturnType]:
         self._check_already_decorated(func)
 
         if asyncio.iscoroutinefunction(func):
