@@ -118,6 +118,8 @@ jobs:
           cache: poetry
       - name: Install dependencies
         run: poetry install --all-extras
+      - name: Set GITHUB_TOKEN with write permissions
+        run: echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
       - name: Build coverage file
         run: |
           poetry run pytest -n 6 --junitxml=pytest.xml --cov=src/declarativex tests/ | tee pytest-coverage.txt
@@ -126,3 +128,4 @@ jobs:
         with:
           pytest-coverage-path: pytest-coverage.txt
           junitxml-path: pytest.xml
+          github-token: ${{ secrets.GITHUB_TOKEN }}
