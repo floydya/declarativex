@@ -356,3 +356,36 @@ def test_files_field(mocker: MockerFixture):
         in send_mock.send.call_args_list[0].args[0].headers["content-type"]
     )
     assert file_content in send_mock.send.call_args_list[0].args[0].read()
+
+
+def test_multiple_instances():
+    PMAN_URL = "https://postman-echo.com"
+    INVALID_URL = "https://invalid.com"
+
+    class EchoClient(BaseClient):
+        @http("get", "/get")
+        def sample_get(self) -> dict:
+            ...
+
+    auth1 = httpx.BasicAuth("client1", "secret1")
+    client1 = EchoClient(
+        base_url=PMAN_URL,
+        default_headers={"x-request-origin": "client1"},
+        default_query_params={"x-my-param": "client1-param"},
+        auth=auth1,
+    )
+
+    result1 = client1.sample_get()
+    assert result1["headers"]["x-request-origin"] == "client1"
+    assert result1["args"]["x-my-param"] == "client1-param"
+
+    auth2 = httpx.BasicAuth("client2", "secret2")
+    client2 = EchoClient(
+        base_url=INVALID_URL,
+        default_headers={"x-request-origin": "client2"},
+        default_query_params={"x-my-param": "client2-param"},
+        auth=auth2,
+    )
+
+    with pytest.raises(httpx.RequestError):
+        client2.sample_get()

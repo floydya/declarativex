@@ -228,16 +228,16 @@ class ClientConfiguration:
         take precedence over the values of this configuration.
         """
         return ClientConfiguration(
-            base_url=self.base_url if self.base_url else other.base_url,
-            auth=self.auth if self.auth else other.auth,
+            base_url=other.base_url if other.base_url else self.base_url,
+            auth=other.auth if other.auth else self.auth,
             default_query_params={
-                **other.default_query_params,
                 **self.default_query_params,
+                **other.default_query_params,
             },
-            default_headers={**other.default_headers, **self.default_headers},
-            middlewares=[*other.middlewares, *self.middlewares],
+            default_headers={**self.default_headers, **other.default_headers},
+            middlewares=other.middlewares,
             error_mappings={**other.error_mappings, **self.error_mappings},
-            proxies=merge_proxies(other.proxies, self.proxies),
+            proxies=merge_proxies(self.proxies, other.proxies),
         )
 
     @classmethod
